@@ -1,0 +1,241 @@
+#!/usr/bin/env bash
+# work — CLI del Work OS (Fase 5/6): projects/enter/status + secret get.
+# `enter`/`status`/`projects`/`secret get` son de solo lectura o solo
+# generan un archivo derivado (CLAUDE.md) - nada destructivo (ver
+# Fase 5). `enter` solo imprime la ruta resuelta a stdout
+# - el `cd` real lo hace la función de shell `work()`
+# (home-manager/zsh.nix), porque un binario no puede cambiar el
+# directorio del shell que lo llamó.
+set -euo pipefail
+
+# $HOME/.config, no una ruta relativa al propio script: este binario se
+# empaqueta vía Nix (home-manager/zsh.nix) y termina viviendo en
+# /nix/store/... - un archivo de datos editable a mano no puede vivir
+# ahí (inmutable, cambia de ruta en cada generación).
+PROJECTS_FILE="${WORK_OS_PROJECTS_FILE:-$HOME/.config/work-os/projects.conf}"
+COMPANIES_FILE="${WORK_OS_COMPANIES_FILE:-$HOME/.config/work-os/companies.conf}"
+# Policy sí gestionada por Nix (a diferencia de projects/companies,
+# editables a mano): es seguridad, tiene que venir del repo versionado,
+# no de un archivo que cualquier proceso local podría tocar.
+SECRETS_POLICY_FILE="${WORK_OS_SECRETS_POLICY_FILE:-$HOME/.config/work-os/secrets-policy.yaml}"
+
+usage() {
+  cat >&2 <<'EOF'
+Uso: work <comando> [args]
+
+  projects            lista los proyectos registrados (nombre y ruta)
+  enter <nombre>      entra al proyecto (cd) y regenera su CLAUDE.md -
+                       requiere la función de shell `work` (no llamar
+                       al binario directo para esto)
+  status               info del proyecto actual: git, direnv
+  secret get <nombre> --skill <skill>
+                        pide un secreto vía Bitwarden (rbw), sujeto a
+                        la allowlist de secrets-policy.yaml -
+                        default-deny (Fase 6, DECISIONS.md #2)
+  vault init|open|close|status|import <dir>
+                       vault/ cifrado (gocryptfs, clave en Bitwarden como
+                        "workos-vault", DECISIONS.md #15)
+  docs <concept_id>    muestra el contenido mapeado a ese concept_id -
+                        del cache local si ya se sincronizó (Fase 11,
+                        sin red), si no en vivo contra Notion/Slack
+                        (Fase 9) - requiere estar parado en un proyecto
+                        con empresa asignada (ver: work status)
+  docs sync [empresa]  sincroniza a disco todo lo mapeado de una
+                        empresa (o todas las registradas si se omite) -
+                        única fuente de tráfico de red del mecanismo,
+                        sin IA en el medio (Fase 11)
+
+Los proyectos se registran a mano en ~/.config/work-os/projects.conf
+(nombre=/ruta/absoluta[=empresa], ver projects.conf.example) y las
+empresas en ~/.config/work-os/companies.conf (empresa=/ruta a la
+instancia de company-context correspondiente, ver companies.conf.example).
+No hay autodescubrimiento todavía - Fase 5/6 son el skeleton.
+EOF
+}
+
+# Imprime "nombre=ruta=empresa" por cada línea válida de un archivo
+# nombre=valor (empresa puede venir vacía) - un solo parser para
+# projects.conf y companies.conf (a este último "empresa" no le aplica,
+# solo se usan los primeros dos campos).
+each_entry() {
+  local file="$1"
+  [ -f "$file" ] || return 0
+  local line n rest p c
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ "$line" =~ ^[[:space:]]*(#.*)?$ ]] && continue
+    IFS='=' read -r n p c <<< "$line"
+    echo "$n=$p=$c"
+  done < "$file"
+}
+
+each_project() { each_entry "$PROJECTS_FILE"; }
+
+find_project() {
+  each_project | awk -F= -v n="$1" '$1==n {print; found=1} END {exit !found}'
+}
+
+find_company_path() {
+  each_entry "$COMPANIES_FILE" | awk -F= -v n="$1" '$1==n {print $2; found=1} END {exit !found}'
+}
+
+cmd_projects() {
+  local found=0 n p c
+  while IFS='=' read -r n p c; do
+    found=1
+    if [ -d "$p" ]; then
+      printf '%-20s %-45s %s\n' "$n" "$p" "$c"
+    else
+      printf '%-20s %-45s %s (no existe)\n' "$n" "$p" "$c" >&2
+    fi
+  done < <(each_project)
+  [ "$found" = 1 ] || echo "No hay proyectos registrados todavía. Agregalos en $PROJECTS_FILE (formato: nombre=/ruta/absoluta[=empresa])." >&2
+}
+
+# Escribe/actualiza <ruta>/CLAUDE.md con el contexto que ya se puede
+# resolver hoy (empresa + ruta a su company-context). El contenido real
+# (reglas, convenciones, systems/services) recién se completa en las
+# Fases 7-10 - acá solo el mecanismo de resolución(Fase 6).
+generate_claude_md() {
+  local name="$1" path="$2" company="$3"
+  local company_ctx_path=""
+  [ -n "$company" ] && company_ctx_path="$(find_company_path "$company" || true)"
+  {
+    echo "# Contexto del proyecto: $name"
+    echo
+    echo "Generado automáticamente por \`work enter\` (Fase 6, work-os/cli/work)"
+    echo "- no editar a mano, se regenera cada vez que entrás al proyecto."
+    echo
+    if [ -n "$company" ]; then
+      echo "- Empresa: $company"
+      if [ -n "$company_ctx_path" ]; then
+        echo "- Company Context: $company_ctx_path"
+      else
+        echo "- Company Context: sin resolver (falta registrar '$company' en ~/.config/work-os/companies.conf)"
+      fi
+    else
+      echo "- Empresa: sin asignar (agregala en ~/.config/work-os/projects.conf: $name=$path=<empresa>)"
+    fi
+    echo
+    echo "(El contenido real de Company Context - reglas, sistemas, servicios -"
+    echo "se completa en las Fases 7-10 del plan; esto todavía es solo el"
+    echo "mecanismo de resolución.)"
+  } > "$path/CLAUDE.md"
+}
+
+cmd_enter() {
+  local name="${1:-}"
+  [ -z "$name" ] && { echo "Uso: work enter <nombre>" >&2; return 1; }
+  local entry n p c
+  entry="$(find_project "$name")" || { echo "Proyecto '$name' no está registrado (ver: work projects)." >&2; return 1; }
+  IFS='=' read -r n p c <<< "$entry"
+  [ -d "$p" ] || { echo "La ruta de '$name' no existe: $p" >&2; return 1; }
+  generate_claude_md "$n" "$p" "$c"
+  echo "$p"
+}
+
+cmd_status() {
+  echo "Directorio actual: $PWD"
+  local match
+  match="$(each_project | awk -F= -v pwd="$PWD" '{ if ($2 == pwd) { print $1; exit } }')"
+  echo "Proyecto registrado: ${match:-(ninguno)}"
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Git: rama $(git branch --show-current 2>/dev/null), $(git status --short | wc -l | tr -d ' ') cambios sin commitear"
+  else
+    echo "Git: no es un repo"
+  fi
+  echo "direnv: ${DIRENV_DIR:+activo}${DIRENV_DIR:-inactivo}"
+}
+
+# Default-deny: solo cierto si "$skill:" existe en la policy y tiene
+# "$name" listado como uno de sus items (- name). Formato de
+# secrets-policy.yaml documentado en ese mismo archivo.
+policy_allows() {
+  local skill="$1" name="$2"
+  [ -f "$SECRETS_POLICY_FILE" ] || return 1
+  awk -v skill="$skill" -v name="$name" '
+    /^[^[:space:]#][^:]*:[[:space:]]*$/ {
+      cur = $0; sub(/:[[:space:]]*$/, "", cur); next
+    }
+    /^[[:space:]]+-[[:space:]]*/ {
+      if (cur == skill) {
+        val = $0
+        sub(/^[[:space:]]+-[[:space:]]*/, "", val)
+        gsub(/[[:space:]]+$/, "", val)
+        if (val == name) found = 1
+      }
+    }
+    END { exit !found }
+  ' "$SECRETS_POLICY_FILE"
+}
+
+cmd_secret_get() {
+  local name="" skill=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --skill) skill="${2:-}"; shift 2 ;;
+      *) [ -z "$name" ] && name="$1"; shift ;;
+    esac
+  done
+  if [ -z "$name" ] || [ -z "$skill" ]; then
+    echo "Uso: work secret get <nombre> --skill <skill>" >&2
+    return 1
+  fi
+  if ! command -v rbw >/dev/null; then
+    echo "Falta 'rbw' en este sistema." >&2; return 1
+  fi
+  policy_allows "$skill" "$name" || {
+    echo "Denegado: '$skill' no tiene permiso para pedir el secreto '$name' (default-deny, ver $SECRETS_POLICY_FILE)." >&2
+    return 1
+  }
+  rbw get "$name"
+}
+
+# Resuelve la empresa/company-context del proyecto en el $PWD actual y
+# delega en work-docs (Python, Fase 9 - fetch en vivo contra Notion/
+# Slack, ver work-os/cli/docs/). Separado en su propio binario en vez
+# de reimplementar HTTP/YAML en bash, como cmd_secret_get sí puede
+# hacer con awk (esto necesita parsear JSON de verdad).
+cmd_docs() {
+  local concept_id="${1:-}"
+  [ -z "$concept_id" ] && { echo "Uso: work docs <concept_id>" >&2; return 1; }
+  local match n p c
+  match="$(each_project | awk -F= -v pwd="$PWD" '{ if ($2 == pwd) { print; exit } }')"
+  [ -z "$match" ] && { echo "No estás parado en un proyecto registrado (ver: work status)." >&2; return 1; }
+  IFS='=' read -r n p c <<< "$match"
+  [ -z "$c" ] && { echo "El proyecto '$n' no tiene empresa asignada (ver ~/.config/work-os/projects.conf)." >&2; return 1; }
+  local ctx_path
+  ctx_path="$(find_company_path "$c")" || { echo "Empresa '$c' no está registrada en ~/.config/work-os/companies.conf." >&2; return 1; }
+  if ! command -v work-docs >/dev/null; then
+    echo "Falta 'work-docs' en este sistema." >&2; return 1
+  fi
+  WORK_OS_COMPANY_CONTEXT="$ctx_path" WORK_OS_COMPANY="$c" work-docs "$concept_id"
+}
+
+case "${1:-}" in
+  projects) cmd_projects ;;
+  enter) shift; cmd_enter "$@" ;;
+  status) cmd_status ;;
+  secret)
+    shift
+    if [ "${1:-}" = "get" ]; then
+      shift
+      cmd_secret_get "$@"
+    else
+      echo "Uso: work secret get <nombre> --skill <skill>" >&2
+      exit 1
+    fi
+    ;;
+  vault) shift; exec workos-vault "$@" ;;
+  docs)
+    shift
+    if [ "${1:-}" = "sync" ]; then
+      shift
+      command -v work-docs-sync >/dev/null || { echo "Falta 'work-docs-sync' en este sistema." >&2; exit 1; }
+      WORK_OS_COMPANIES_FILE="$COMPANIES_FILE" work-docs-sync "$@"
+    else
+      cmd_docs "$@"
+    fi
+    ;;
+  ""|-h|--help|help) usage ;;
+  *) echo "Comando desconocido: $1" >&2; usage; exit 1 ;;
+esac

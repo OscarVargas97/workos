@@ -1,0 +1,12 @@
+# Copiá este archivo a ~/.config/work-os/projects.conf (fuera del repo
+# a propósito - es data local tuya, no de la empresa, y el binario
+# `work` vive en el store de Nix, no en un checkout de este repo) y
+# completá con tus proyectos reales.
+# Formato: nombre=/ruta/absoluta[=empresa] (una línea por proyecto, "="
+# no puede aparecer en el nombre). La empresa es opcional - sin ella,
+# `work enter` genera un CLAUDE.md sin resolver Company Context (Fase 6).
+# El nombre de empresa tiene que coincidir con una entrada de
+# ~/.config/work-os/companies.conf (ver companies.conf.example).
+#
+# api=/home/tu-usuario/Repos/Acme/api=acme
+# web=/home/tu-usuario/Repos/Acme/web=acme

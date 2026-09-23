@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://company-context/schemas/frontmatter.schema.json",
+  "title": "Frontmatter de entidad de company-context",
+  "description": "Ver ../SCHEMA.md, sección 5. Validación de la cabecera YAML de todo archivo en company/, projects/, systems/, services/, conventions/ y decisions/.",
+  "type": "object",
+  "required": ["concept_id", "type", "name", "source", "status", "confidence", "updated"],
+  "additionalProperties": false,
+  "properties": {
+    "concept_id": {
+      "type": "string",
+      "pattern": "^(team|person|project|system|service|convention|decision)-[a-z0-9-]+$",
+      "description": "Único y estable - formato <tipo>-<slug> (SCHEMA.md, 3.3). No cambia aunque cambie 'name'."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["team", "person", "project", "system", "service", "convention", "decision"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Nombre visible, puede cambiar sin tocar concept_id."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["notion", "slack", "manual"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "deprecated", "draft"],
+      "description": "Ciclo de vida de la entidad (SCHEMA.md, sección 5) - distinto de 'confidence'."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["verified", "unverified"],
+      "description": "Qué tan confiable es el dato (SCHEMA.md, sección 5.1) - distinto de 'status'."
+    },
+    "updated": {
+      "type": "string",
+      "format": "date",
+      "description": "Última vez que se tocó el archivo, YYYY-MM-DD."
+    },
+    "depends_on": { "$ref": "#/$defs/conceptIdList" },
+    "owned_by": { "$ref": "#/$defs/conceptIdList" },
+    "part_of": { "$ref": "#/$defs/conceptIdList" },
+    "documented_in": { "$ref": "#/$defs/conceptIdList" },
+    "supersedes": { "$ref": "#/$defs/conceptIdList" }
+  },
+  "$defs": {
+    "conceptIdList": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de concept_id relacionados (SCHEMA.md, sección 3.2)."
+    }
+  }
+}

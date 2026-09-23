@@ -1,0 +1,19 @@
+*.env
+.env*
+!.env.example
+# Pre-mapeo repo->empresa de migrate-pc.sh (perfil de esta máquina, no
+# de la empresa - rutas reales de $HOME de quien lo corre).
+scripts/repo-companies.conf
+*secret*
+# Excepciones al *secret* de arriba: código/policy versionados (nunca
+# valores de secretos reales) - ver DECISIONS.md #2.
+# - cli/secrets-policy.yaml: nombres de secretos permitidos por skill.
+# - mcp/secrets/: el server MCP que envuelve `work secret get` (el
+#   *secret* de arriba matchea el nombre del directorio entero, no solo
+#   archivos sueltos, así que hay que reincluir la carpeta explícita).
+!cli/secrets-policy.yaml
+!mcp/secrets/
+!mcp/secrets/**
+*token*
+*.key
+*.pem

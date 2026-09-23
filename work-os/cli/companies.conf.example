@@ -1,0 +1,9 @@
+# Copiá este archivo a ~/.config/work-os/companies.conf (fuera del
+# repo - data local tuya) y completá con las instancias de
+# company-context que uses (ver DECISIONS.md #11: una instancia por
+# empresa, nunca multi-tenant). Cada instancia vive en el repo privado,
+# en companies/<empresa>/.
+# Formato: empresa=/ruta/absoluta/a/esa/instancia
+#
+# acme=/home/tu-usuario/Repos/Externos/workos/workos-private/companies/acme
+# un-cliente-freelance=/home/tu-usuario/Repos/Externos/workos/workos-private/companies/un-cliente-freelance
