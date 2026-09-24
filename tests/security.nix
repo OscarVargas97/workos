@@ -8,6 +8,7 @@
 #   - SSH: solo clave desde la red de confianza, clave + código desde afuera;
 #   - TPM2 + PIN: el mismo systemd-cryptenroll de post-install-setup.sh;
 #   - vault cifrado: init/open/close/import, y que no quede nada en claro;
+#     .env de repos (env push/pull/list, --all sin declarar repos, reorg);
 #   - ataques: su/pkexec sin código, reusar un código, fuerza bruta, cruzar
 #     códigos, SSH con contraseña, borrar el secreto (nullok vs enforce),
 #     TPM2 sin PIN, nombres visibles en el vault.
@@ -15,8 +16,8 @@
 let
   keys = import "${pkgs.path}/nixos/tests/ssh-keys.nix" pkgs;
   vault = pkgs.writeShellScriptBin "workos-vault" ''
-    export PATH=${pkgs.lib.makeBinPath [ pkgs.gocryptfs pkgs.rsync pkgs.util-linux ]}:$PATH
-    exec ${pkgs.bash}/bin/bash ${../work-os/scripts/vault.sh} "$@"
+    export PATH=${pkgs.lib.makeBinPath [ pkgs.gocryptfs pkgs.rsync pkgs.util-linux pkgs.git pkgs.diffutils pkgs.findutils ]}:$PATH
+    exec ${pkgs.bash}/bin/bash ${../work-os/scripts}/vault.sh "$@"
   '';
   client = {
     virtualisation.vlans = [ 1 ];
@@ -60,7 +61,7 @@ pkgs.testers.runNixOSTest {
         catch wait r
         exit [lindex $r 3]
       '';
-      environment.systemPackages = with pkgs; [ oath-toolkit pamtester google-authenticator cryptsetup vault expect ];
+      environment.systemPackages = with pkgs; [ oath-toolkit pamtester google-authenticator cryptsetup vault expect git ];
     };
     # totp.enforce: sin nullok, que falte el secreto no abre nada.
     strict = { ... }: {
@@ -255,6 +256,41 @@ pkgs.testers.runNixOSTest {
         machine.fail("su alice -c \"WORKOS_BASE=/home/alice/w WORKOS_VAULT_PASS_CMD='echo mala' workos-vault open\"")
         machine.succeed(v("open"))
         machine.succeed("su alice -c 'grep -q SECRETO_DB ~/w/vault/proy/.env'")
+        machine.succeed(v("close"))
+
+    with subtest("vault: .env de cualquier repo (env push/pull/list, --all, reorg)"):
+        def va(args, cwd="~", stdin=""):
+            feed = f"echo {stdin} | " if stdin else ""
+            return f"su alice -c \"cd {cwd} && {feed}{env} WORKOS_PRIVATE=/home/alice/priv workos-vault {args}\""
+        vd = "/home/alice/w/vault"
+        app = "~/Repos/Acme/app"
+        machine.succeed("su alice -c '"
+            "mkdir -p ~/Repos/Acme/app/sub ~/Repos/Otro/api && cd ~/Repos/Acme/app && git init -q && "
+            "printf \".env*\\n!.env.example\\n\" > .gitignore && echo A=1 > .env && echo B=2 > sub/.env && "
+            "echo A= > .env.example && cd ~/Repos/Otro/api && git init -q && echo .env > .gitignore && echo C=3 > .env'")
+        machine.fail(va("env push", app))  # cerrado: no lo abre solo
+        machine.succeed(v("open"))
+        machine.succeed(va("env push", app))
+        machine.succeed(f"su alice -c 'grep -q A=1 {vd}/Repos/Acme/app/.env && grep -q B=2 {vd}/Repos/Acme/app/sub/.env'")
+        machine.fail(f"su alice -c 'test -e {vd}/Repos/Acme/app/.env.example'")  # versionado = no es secreto
+        machine.succeed(va("env push --all"))  # desde $HOME, sin declarar repos
+        machine.succeed(f"su alice -c 'grep -q C=3 {vd}/Repos/Otro/api/.env'")
+        machine.succeed(f"su alice -c 'echo A=2 > {app}/.env'")
+        assert "distinto       .env" in machine.succeed(va("env list", app))
+        machine.succeed(va("env push", app, stdin="n"))
+        machine.succeed(f"su alice -c 'grep -q A=1 {vd}/Repos/Acme/app/.env'")  # dijo que no: sin cambios
+        machine.succeed(va("env push", app, stdin="s"))
+        machine.succeed(f"su alice -c 'grep -q A=2 {vd}/Repos/Acme/app/.env'")
+        machine.succeed(f"su alice -c 'rm {app}/.env'")
+        machine.succeed(va("env pull", app))
+        machine.succeed(f"su alice -c 'grep -q A=2 {app}/.env && test $(stat -c %a {app}/.env) = 600'")
+        # reorg: layout viejo -> el de repo-companies.conf (como migrate-pc.sh)
+        machine.succeed("su alice -c '"
+            f"mkdir -p {vd}/Viejo/app {vd}/Viejo/dup ~/priv/work-os && echo D=4 > {vd}/Viejo/app/.env && "
+            f"echo E=5 > {vd}/Viejo/dup/.env && printf \"Viejo/app=acme=app2\\nViejo/dup==\\n\" > ~/priv/work-os/repo-companies.conf'")
+        machine.succeed(va("reorg", stdin="si"))
+        machine.succeed(f"su alice -c 'grep -q D=4 {vd}/Repos/Acme/app2/.env && grep -q E=5 {vd}/_sin-destino/Viejo/dup/.env'")
+        machine.fail(f"su alice -c 'test -e {vd}/Viejo'")
         machine.succeed(v("close"))
   '';
 }

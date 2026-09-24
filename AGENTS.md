@@ -57,7 +57,7 @@ Layout local esperado por los scripts (carpetas hermanas):
 | `work-os/cli/docs/` | `work docs`: adaptadores Notion/Slack (Python, `uv run`, PEP 723) | tests: `uv run work-os/cli/docs/test_adapters.py` |
 | `work-os/mcp/secrets/server.py` | MCP que expone `work secret get` | |
 | `init.sh` | Punto de entrada: baja o crea el repo privado, lo configura, valida y publica | modo sin preguntas con `WORKOS_*` (§6) |
-| `work-os/scripts/vault.sh` | vault cifrado con gocryptfs (`work vault`); clave en Bitwarden `workos-vault` | |
+| `work-os/scripts/vault.sh` | vault cifrado con gocryptfs (`work vault`); clave en Bitwarden `workos-vault`. `env list/pull/push [--all]/send` sincroniza los `.env` de cualquier repo (misma ruta relativa al home); `reorg` usa `lib-repos.sh`. Nunca abre el vault solo | |
 | `tests/` | `security.nix` (VMs, `nix build .#checks.x86_64-linux.security`), `e2e-install.sh` (instalación completa en VM con swtpm) | ver §5 |
 | `work-os/scripts/` | USB, deploy, post-install, mapeo de repos (`map-repos.sh` + `lib-repos.sh`), migración, auditoría; `make` lista el orden | leen `../workos-private/work-os/scripts.env` |
 | `company-context/` | `SCHEMA.md`, JSON Schema, tooling (`validate.py`, `new-entity.py`, `semantic_search.py`) | las instancias viven en el privado, `companies/<empresa>/` |

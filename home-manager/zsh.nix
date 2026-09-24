@@ -37,8 +37,8 @@ let
   # `work vault ...` (DECISIONS.md #15). PATH se antepone, no se reemplaza:
   # fusermount tiene que seguir saliendo de /run/wrappers (setuid).
   workos-vault = pkgs.writeShellScriptBin "workos-vault" ''
-    export PATH=${pkgs.lib.makeBinPath [ pkgs.gocryptfs pkgs.rsync pkgs.util-linux pkgs.rbw ]}:$PATH
-    exec ${pkgs.bash}/bin/bash ${../work-os/scripts/vault.sh} "$@"
+    export PATH=${pkgs.lib.makeBinPath [ pkgs.gocryptfs pkgs.rsync pkgs.util-linux pkgs.rbw pkgs.git pkgs.diffutils pkgs.findutils pkgs.localsend ]}:$PATH
+    exec ${pkgs.bash}/bin/bash ${../work-os/scripts}/vault.sh "$@"
   '';
 in
 {

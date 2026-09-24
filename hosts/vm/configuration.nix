@@ -108,6 +108,9 @@
   # dconf: GNOME Boxes (y otras apps GTK) lo necesitan para guardar sus
   # settings - sin esto tira warnings o pierde preferencias entre corridas.
   programs.dconf.enable = true;
+  # LocalSend: pasar archivos entre equipos de la red (work vault env send).
+  # Abre el 53317 (TCP/UDP) para descubrir equipos y recibir.
+  programs.localsend = { enable = true; openFirewall = true; };
 
   # hyprpolkitagent (home-manager, hyprland.nix) necesita el servicio de
   # polkit corriendo — explícito para no depender de que algo más lo

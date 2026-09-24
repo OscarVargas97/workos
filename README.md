@@ -307,7 +307,7 @@ momento.
 | Actualizar NixOS y paquetes | `nix flake update` en `workos-private`, commit, `rebuild` |
 | Volver a la versión anterior | elegirla en el menú de arranque |
 | Entrar a un proyecto | `work enter <proyecto>` (ver [`work-os/README.md`](./work-os/README.md)) |
-| Usar los `.env`/dumps de tus proyectos | `work vault open` → están en `~/Repos/Externos/workos/vault/`; `work vault close` al terminar |
+| Usar los `.env`/dumps de tus proyectos | `work vault open` → están en `~/Repos/Externos/workos/vault/`; `work vault env pull`/`push` en el repo; `work vault close` al terminar |
 | Ver los atajos de teclado | `Super+K` |
 
 ### 4.1 Seguridad
@@ -350,6 +350,20 @@ cada reintento gasta un intento; mejor cortá con Ctrl-C y esperá 30 s.
 **Vault:** `work vault init` la primera vez (crea la clave `workos-vault`
 en Bitwarden), `work vault import <carpeta>` para cifrar un vault viejo en
 claro (verifica la copia y ofrece borrar el original), `open`/`close`/`status`.
+
+**`.env` de tus repos en el vault** (con el vault abierto; nunca se abre
+solo). El vault guarda cada `.env` en la misma ruta relativa a tu home
+(`~/Repos/X/app/.env` ↔ `vault/Repos/X/app/.env`). Funciona en cualquier
+repo, sin registrarlo; solo toma `.env*` que git ignora:
+
+| Comando (parado en el repo) | Qué hace |
+|---|---|
+| `work vault env list` | compara repo y vault: igual / distinto / solo en uno |
+| `work vault env push [archivo]` | repo → vault (pregunta antes de reemplazar) |
+| `work vault env push --all` | lo mismo para todos los repos bajo tu home |
+| `work vault env pull [archivo]` | vault → repo (pregunta antes de reemplazar) |
+| `work vault env send <archivo>` | lo manda por LocalSend a otro equipo |
+| `work vault reorg` | mueve un vault de una migración vieja a las rutas nuevas, con el mapeo de `repo-companies.conf` (muestra el plan y pide `si`) |
 
 ---
 

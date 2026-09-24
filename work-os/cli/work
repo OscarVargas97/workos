@@ -32,7 +32,7 @@ Uso: work <comando> [args]
                         pide un secreto vía Bitwarden (rbw), sujeto a
                         la allowlist de secrets-policy.yaml -
                         default-deny (Fase 6, DECISIONS.md #2)
-  vault init|open|close|status|import <dir>
+  vault init|open|close|status|import <dir>|env ...|reorg
                        vault/ cifrado (gocryptfs, clave en Bitwarden como
                         "workos-vault", DECISIONS.md #15)
   docs <concept_id>    muestra el contenido mapeado a ese concept_id -
