@@ -141,6 +141,12 @@
     # esto, migrate-pc.sh copia ~/.aws pero no hay binario que lo use -
     # bug real, encontrado auditando la laptop nueva después de migrar.
     awscli2
+    # Plugin de Session Manager para AWS CLI (`aws ssm start-session`,
+    # port forwarding) - sin este binario en el PATH, awscli2 falla con
+    # "SessionManagerPlugin is not found" aunque el comando esté bien
+    # escrito; no es un paquete de Python instalable con pip, es un
+    # binario nativo que el CLI busca por nombre.
+    ssm-session-manager-plugin
     # Backend de secretos para agentes (Fase 6, DECISIONS.md #2) - rbw
     # (cliente no oficial de Bitwarden) en vez de `bw` oficial: pensado
     # para scripting, `rbw get <nombre>` sin manejar session tokens a
