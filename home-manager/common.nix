@@ -11,6 +11,7 @@
     ./kitty.nix
     ./devenv.nix
     ./herdr.nix
+    ./yazi.nix
   ];
 
   home.stateVersion = "26.05";
