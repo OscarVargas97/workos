@@ -165,6 +165,7 @@
   environment.systemPackages = with pkgs; [
     git
     vim
+    gnumake
     # docker-compose clásico (standalone, con guion) - el subcomando
     # nuevo "docker compose" ya viene con el docker de nixpkgs, este es
     # por si algún proyecto todavía invoca el binario viejo.
