@@ -101,6 +101,7 @@
     lazygit
     gh
     claude-code
+    kubectl
     brave
     slack
     discord
