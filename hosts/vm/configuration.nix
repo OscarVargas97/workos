@@ -38,6 +38,16 @@
   };
   nix.settings.auto-optimise-store = true;
 
+  # Fase 3 (devenv/uv) - herramientas como uv, rustup o el server de
+  # VS Code bajan sus propios binarios Linux "genéricos" (linkeados
+  # dinámicamente contra un loader FHS que NixOS no tiene por defecto).
+  # Sin esto, cualquier proyecto que fija su versión de runtime vía esas
+  # herramientas (en vez de nixpkgs) falla al arrancar con "cannot run
+  # dynamically linked executable" (visto con uv bajando Python 3.14 para
+  # un proyecto, 2026-09-24). nix-ld les da el loader e intercepta las
+  # libs dinámicas que pidan, sin tocar nada por proyecto.
+  programs.nix-ld.enable = true;
+
   # Explícito a propósito (auditoría de seguridad, 2026-09-16): ya es el
   # default de NixOS, pero el criterio de este repo es no depender de
   # defaults no versionados (mismo caso que pipewire en Fase 2b). No
