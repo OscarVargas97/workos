@@ -27,6 +27,14 @@ Uso: work <comando> [args]
   enter <nombre>      entra al proyecto (cd) y regenera su CLAUDE.md -
                        requiere la función de shell `work` (no llamar
                        al binario directo para esto)
+  clone <url-o-owner/repo> [--company <empresa>] [--as <nombre>]
+                       clona en Repos/<Empresa>/<nombre> (con --company)
+                       o Repos/Externos/<nombre> (sin --company) - mismo
+                       criterio que map-repos.sh - y entra (cd) al
+                       resultado. "owner/repo" usa `gh repo clone`
+                       (repos privados vía la cuenta activa de gh); una
+                       URL usa `git clone`. Requiere la función de shell
+                       `work`, igual que `enter`
   status               info del proyecto actual: git, direnv
   secret get <nombre> --skill <skill>
                         pide un secreto vía Bitwarden (rbw), sujeto a
@@ -133,6 +141,58 @@ cmd_enter() {
   echo "$p"
 }
 
+EMPRESA_RE='^[a-z][a-z0-9-]*$'
+
+# Mismo criterio que repo_dest_path en work-os/scripts/lib-repos.sh
+# (map-repos.sh/migrate-pc.sh): con empresa -> Repos/<Empresa>/<nombre>
+# (carpeta con mayúscula inicial, clave en minúscula); sin empresa ->
+# Repos/Externos/<nombre>. Ese script vive fuera del binario empaquetado
+# (es de mantenimiento, se corre a mano desde el checkout), así que la
+# regla se repite acá en vez de compartir código entre los dos.
+cmd_clone() {
+  local url="" company="" name=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --company) company="${2:-}"; shift 2 ;;
+      --as) name="${2:-}"; shift 2 ;;
+      *) [ -z "$url" ] && url="$1"; shift ;;
+    esac
+  done
+  if [ -z "$url" ]; then
+    echo "Uso: work clone <url-o-owner/repo> [--company <empresa>] [--as <nombre>]" >&2
+    return 1
+  fi
+  if [ -n "$company" ] && [[ ! "$company" =~ $EMPRESA_RE ]]; then
+    echo "Empresa inválida: '$company' (minúsculas, números y '-', ver companies.conf)." >&2
+    return 1
+  fi
+  if [ -z "$name" ]; then
+    name="${url##*/}"
+    name="${name%.git}"
+  fi
+  local dest
+  if [ -n "$company" ]; then
+    dest="$HOME/Repos/$(tr '[:lower:]' '[:upper:]' <<< "${company:0:1}")${company:1}/$name"
+  else
+    dest="$HOME/Repos/Externos/$name"
+  fi
+  [ -e "$dest" ] && { echo "Ya existe: $dest" >&2; return 1; }
+  case "$url" in
+    *://*|*@*)
+      git clone "$url" "$dest" >&2 || return $?
+      ;;
+    */*)
+      command -v gh >/dev/null || { echo "'$url' parece owner/repo pero falta 'gh' en el sistema." >&2; return 1; }
+      gh repo clone "$url" "$dest" >&2 || return $?
+      ;;
+    *)
+      echo "'$url' no es una URL ni un owner/repo válido." >&2
+      return 1
+      ;;
+  esac
+  echo "$dest"
+}
+
 cmd_status() {
   echo "Directorio actual: $PWD"
   local match
@@ -214,6 +274,7 @@ cmd_docs() {
 case "${1:-}" in
   projects) cmd_projects ;;
   enter) shift; cmd_enter "$@" ;;
+  clone) shift; cmd_clone "$@" ;;
   status) cmd_status ;;
   secret)
     shift

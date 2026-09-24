@@ -160,12 +160,12 @@ in
       }
 
       # Work OS CLI (Fase 5, work-os/cli/work, empaquetado como work-cli
-      # más arriba) - envuelto en función de shell porque "enter" hace
-      # cd: un binario no puede cambiar el directorio del shell que lo
-      # llamó, solo una función puede.
+      # más arriba) - envuelto en función de shell porque "enter" y
+      # "clone" hacen cd: un binario no puede cambiar el directorio del
+      # shell que lo llamó, solo una función puede.
       function work(){
         local bin="${work-cli}/bin/work-cli"
-        if [ "$1" = "enter" ]; then
+        if [ "$1" = "enter" ] || [ "$1" = "clone" ]; then
           local dest
           dest="$("$bin" "$@")" || return $?
           cd "$dest"
