@@ -130,6 +130,11 @@
     # dbeaver-bin es el paquete correcto en nixpkgs, "dbeaver" a secas
     # no existe.
     dbeaver-bin
+    # Cliente de base de datos de terminal (alternativa liviana a DBeaver
+    # para uso rápido desde kitty/herdr, sin abrir una app Java/Electron
+    # aparte) - conexiones en ~/.config/lazysql/config.toml, fuera de
+    # este repo (dato de máquina, no de sistema).
+    lazysql
     # AWS CLI v2 (auditoría de dotfiles real: ~/.aws/config con perfiles
     # ya armados) - "awscli" a
     # secas es la v1 vieja en nixpkgs, "awscli2" es la correcta. Sin
