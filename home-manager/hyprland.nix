@@ -118,11 +118,13 @@ in
       # semi-transparente ya dan el look pedido, sin perseguir una
       # sintaxis no documentada.
 
-      # us + latam intercambiables (pedido explícito) - el toggle es el
-      # bind Alt+Espacio de más abajo (kb-layout-toggle), no una opción
-      # XKB, para poder avisar con una notificación cuál quedó activo.
+      # us (variante intl, para tener ñ/tildes por dead keys) + latam
+      # intercambiables (pedido explícito) - el toggle es el bind
+      # Alt+Espacio de más abajo (kb-layout-toggle), no una opción XKB,
+      # para poder avisar con una notificación cuál quedó activo.
       input = {
         kb_layout = "us,latam";
+        kb_variant = "intl,";
         follow_mouse = 1;
       };
 
