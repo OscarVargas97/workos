@@ -186,6 +186,11 @@ in
           "$mod SHIFT, minus, HUD: Reloj, exec, ags request -i cyberpunk clock"
           "$mod SHIFT, Y, HUD: Batería, exec, ags request -i cyberpunk 'modal bat'"
           "$mod SHIFT, C, HUD: Monitor CPU/RAM, exec, ags request -i cyberpunk 'modal sys'"
+          # % de sesión (5h)/semana de Claude Code, del mismo endpoint que usa
+          # `claude` para su propio status (ver aiusage.ts/scripts/ai-usage.py
+          # en cyber-shell) - reusa el token OAuth que Claude Code ya guarda,
+          # nunca pide credenciales nuevas.
+          "$mod SHIFT, U, HUD: Uso de Claude Code (sesion/semana), exec, ags request -i cyberpunk 'modal aiusage'"
           "$mod SHIFT, BackSpace, HUD: Ajustes del tema (animaciones/blur), exec, ags request -i cyberpunk 'modal themesettings'"
           # Mismo mensaje de socket que dispara el click en el ícono "R" del
           # dock (confirmado contra scripts/screenrecord) - un solo bind,
