@@ -25,7 +25,8 @@ in
     cyberShellBin
     agsPkgs.default # `ags` en el PATH - lo usan los binds de hyprland.nix (perf full/balanced/performance)
     pkgs.sassc # compila components/style/cyber.scss -> cyber.css
-    pkgs.python3 # scripts/gen-map.py (minimapa del sidepanel)
+    (pkgs.python3.withPackages (ps: [ ps.pillow ])) # scripts/gen-map.py (minimapa del sidepanel) necesita Pillow
+    pkgs.wirelesstools # iwgetid - SSID de wifi para el widget de red del sidepanel
     pkgs.nerd-fonts.symbols-only # ICONF = "Symbols Nerd Font" en fonts.ts
   ];
 
