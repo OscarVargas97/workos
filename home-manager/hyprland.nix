@@ -159,14 +159,18 @@ in
           "$mod, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
           "$mod, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
           # El popup de "nueva versión"/paquetes AUR pendientes (aurbar.ts en
-          # cyber-shell) ya dibuja las teclas U/J/Q en pantalla, pero nunca
+          # cyber-shell) ya dibuja las teclas U/J/A en pantalla, pero nunca
           # tuvieron bind real detrás (por eso "no prestaban") - mismo caso
-          # que notif-dismiss/notif-read de arriba. U y J sin Shift para no
-          # pisar $mod SHIFT+U (uso de Claude Code); Q con CTRL porque Q y
-          # SHIFT+Q ya están tomados (cerrar ventana / bloquear, arriba).
+          # que notif-dismiss/notif-read de arriba. Las tres sin Shift/Ctrl
+          # (solo $mod + la letra que se ve) para que lo que se aprieta sea
+          # exactamente lo que el HUD muestra - probamos con Q+CTRL antes
+          # (Q y SHIFT+Q ya tomados por cerrar ventana/bloquear) y el HUD
+          # seguía mostrando solo "Q", así que $mod+Q terminaba cerrando la
+          # ventana en foco en vez de actualizar. A (de "Actualizar") en
+          # cambio está completamente libre.
           "$mod, U, HUD: Actualizar paquetes AUR pendientes, exec, ags request -i cyberpunk aur-upgrade"
           "$mod, J, HUD: Descartar aviso de actualización, exec, ags request -i cyberpunk update-dismiss"
-          "$mod CTRL, Q, HUD: Actualizar CyberArch (nueva versión), exec, ags request -i cyberpunk cyber-update"
+          "$mod, A, HUD: Actualizar CyberArch (nueva versión), exec, ags request -i cyberpunk cyber-update"
           "ALT, SPACE, Aplicaciones: Cambiar layout de teclado (us/latam), exec, kb-layout-toggle"
           # 3 planes de animaciones/blur del HUD (pedido explícito: nunca
           # apagar animWheel, el menu de apps - baja el resto + el blur
