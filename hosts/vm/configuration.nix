@@ -11,7 +11,7 @@
   networking.hostName = "vm";
   networking.networkmanager.enable = true;
 
-  # Brave/Slack y similares son unfree.
+  # Brave y similares son unfree.
   nixpkgs.config.allowUnfree = true;
 
   # Fase 3 (devenv) - sin esto, devenv/nix-direnv fallan con "ignoring

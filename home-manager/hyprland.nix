@@ -1,6 +1,7 @@
 # Fase 2 — Hyprland + barra + launcher + notificaciones + bloqueo.
 # Workspaces pensados como: 1 código, 2 terminal, 3 navegador,
-# 4 comunicación (Slack), 5 IA/agentes. No es definitivo, se ajusta con uso real.
+# 4 comunicación (slk, TUI en una terminal), 5 IA/agentes. No es
+# definitivo, se ajusta con uso real.
 { pkgs, osConfig, ... }:
 let
   # El toggle de teclado (Alt+Espacio) queda como bind explícito de
