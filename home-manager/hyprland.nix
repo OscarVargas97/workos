@@ -150,48 +150,52 @@ in
           ", Print, Capturas: Captura de región (al portapapeles), exec, grim -g \"$(slurp)\" - | wl-copy"
           "$mod, Print, Capturas: Captura de región (a archivo), exec, grim -g \"$(slurp)\" \"$HOME/Imagenes/captura-$(date +%Y%m%d-%H%M%S).png\""
           "$mod, B, Aplicaciones: Abrir Brave, exec, brave"
-          # El HUD dibuja "DISMISS [X]" / "READ MESSAGE [E]" en el popup de
-          # notificaciones, pero esas letras nunca estuvieron conectadas a
-          # nada (ni Hyprland ni un handler de teclado propio del widget) -
-          # notifDismiss()/notifReadCurrent() ya existen y ya responden a
-          # "ags request", solo faltaba el bind. Con $mod (no la tecla
-          # sola) para no robarse el "x"/"e" al escribir en cualquier lado.
-          "$mod, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
-          "$mod, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
-          # El popup de "nueva versión"/paquetes AUR pendientes (aurbar.ts en
-          # cyber-shell) ya dibuja las teclas U/J/A en pantalla, pero nunca
-          # tuvieron bind real detrás (por eso "no prestaban") - mismo caso
-          # que notif-dismiss/notif-read de arriba. Las tres sin Shift/Ctrl
-          # (solo $mod + la letra que se ve) para que lo que se aprieta sea
-          # exactamente lo que el HUD muestra - probamos con Q+CTRL antes
-          # (Q y SHIFT+Q ya tomados por cerrar ventana/bloquear) y el HUD
-          # seguía mostrando solo "Q", así que $mod+Q terminaba cerrando la
-          # ventana en foco en vez de actualizar. A (de "Actualizar") en
-          # cambio está completamente libre.
-          "$mod, U, HUD: Actualizar paquetes AUR pendientes, exec, ags request -i cyberpunk aur-upgrade"
-          "$mod, J, HUD: Descartar aviso de actualización, exec, ags request -i cyberpunk update-dismiss"
-          "$mod, A, HUD: Actualizar CyberArch (nueva versión), exec, ags request -i cyberpunk cyber-update"
           "ALT, SPACE, Aplicaciones: Cambiar layout de teclado (us/latam), exec, kb-layout-toggle"
+
+          # Todo lo que habla con el HUD (ags request -i cyberpunk) usa
+          # siempre $mod SHIFT + letra, sin excepción - pedido explícito de
+          # consistencia. Antes se mezclaba $mod solo para "acciones
+          # directas" (notif, updates, perf, shortcuts, apps-menu) con
+          # $mod SHIFT para "modales" (volumen, wifi...), y esa mezcla
+          # generó un bug real: un bind terminó necesitando
+          # SUPER+CTRL+Q porque Q y SHIFT+Q ya estaban tomados, pero el HUD
+          # seguía dibujando solo "Q" - confuso y roto. $mod solo queda
+          # reservado para gestión de ventanas y lanzar apps (arriba);
+          # $mod SHIFT+letra que abajo NO dice "HUD:" en la descripción es
+          # gestión nativa de ventanas (fullscreen, forzar cierre, mover
+          # ventana), no pasa por cyber-shell.
+          #
+          # Los popups que dibujan la tecla en pantalla (aurbar.ts/
+          # notifpopup.ts en cyber-shell) la leen en vivo de `hyprctl binds
+          # -j` (ver keymap.ts ahí) - cambiar la letra acá abajo alcanza,
+          # nunca más hace falta tocar cyber-shell para que el dibujo
+          # coincida con el bind real.
+          "$mod SHIFT, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
+          "$mod SHIFT, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
+          # G (no U): U ya es "modal aiusage" más abajo.
+          "$mod SHIFT, G, HUD: Actualizar paquetes AUR pendientes, exec, ags request -i cyberpunk aur-upgrade"
+          "$mod SHIFT, J, HUD: Descartar aviso de actualización, exec, ags request -i cyberpunk update-dismiss"
+          "$mod SHIFT, A, HUD: Actualizar CyberArch (nueva versión), exec, ags request -i cyberpunk cyber-update"
           # 3 planes de animaciones/blur del HUD (pedido explícito: nunca
           # apagar animWheel, el menu de apps - baja el resto + el blur
           # de Hyprland, ver applyPerfPreset en cyber-shell/config.ts).
-          "$mod, F1, HUD: Plan de rendimiento FULL, exec, ags request -i cyberpunk 'perf full'"
-          "$mod, F2, HUD: Plan de rendimiento BALANCED, exec, ags request -i cyberpunk 'perf balanced'"
-          "$mod, F3, HUD: Plan de rendimiento PERFORMANCE, exec, ags request -i cyberpunk 'perf performance'"
-          # Panel con todos los binds de Hyprland (lee hyprctl binds -j
-          # en vivo, ver shortcuts.ts) - mientras se aprende Wayland.
-          "$mod, K, HUD: Abrir/cerrar panel de shortcuts, exec, ags request -i cyberpunk shortcuts"
+          "$mod SHIFT, F1, HUD: Plan de rendimiento FULL, exec, ags request -i cyberpunk 'perf full'"
+          "$mod SHIFT, F2, HUD: Plan de rendimiento BALANCED, exec, ags request -i cyberpunk 'perf balanced'"
+          "$mod SHIFT, F3, HUD: Plan de rendimiento PERFORMANCE, exec, ags request -i cyberpunk 'perf performance'"
+          # Panel con todos los binds de Hyprland (lee hyprctl binds -j en
+          # vivo, ver shortcuts.ts) - mientras se aprende Wayland. S (no K):
+          # K ya es "forzar cierre" en gestión de ventanas, más abajo.
+          "$mod SHIFT, S, HUD: Abrir/cerrar panel de shortcuts, exec, ags request -i cyberpunk shortcuts"
 
           # El resto de los paneles/toggles del HUD (auditoría completa de
           # userbinds.ts/THEME_ACTIONS - el diseño original de CyberArch-Shell,
           # pensado para un sistema de config Lua que no usamos, ver
-          # DECISIONS.md). Se traduce acá 1 a 1 a bindd real, con la misma
-          # convención SUPER+SHIFT+letra del diseño original. Quedan afuera
+          # DECISIONS.md). Se traduce acá 1 a 1 a bindd real. Quedan afuera
           # a propósito: chequeo de updates de AUR/del tema (no aplica,
           # desplegamos por Nix desde un commit fijo, no hay AUR) y el
           # cheatsheet estático de keybinds del HUD (mostraría datos
-          # desactualizados/con entradas de AUR - nuestro panel de $mod+K
-          # ya cubre eso mejor, lee hyprctl binds -j en vivo).
+          # desactualizados/con entradas de AUR - nuestro panel de
+          # $mod SHIFT+S ya cubre eso mejor, lee hyprctl binds -j en vivo).
           "$mod SHIFT, V, HUD: Volumen, exec, ags request -i cyberpunk 'modal vol'"
           "$mod SHIFT, I, HUD: Brillo, exec, ags request -i cyberpunk 'modal brt'"
           "$mod SHIFT, M, HUD: Notificaciones (historial), exec, ags request -i cyberpunk notif-hud"
@@ -219,7 +223,8 @@ in
           # la auditoría de arriba no lo vio porque está en un CD.bind()
           # suelto de keybinds.lua, no en THEME_ACTIONS. $mod+D sigue
           # siendo wofi (el request "launcher" es eso mismo, no hace falta).
-          "$mod, Tab, HUD: Menú de aplicaciones (rueda), exec, ags request -i cyberpunk apps-menu"
+          # SHIFT (no $mod solo) por la convención unificada de HUD de arriba.
+          "$mod SHIFT, Tab, HUD: Menú de aplicaciones (rueda), exec, ags request -i cyberpunk apps-menu"
 
           # Gestión de ventanas del diseño original - estas son 100%
           # Hyprland nativo, no pasan por el HUD (no tiene sentido pedirle
