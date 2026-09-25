@@ -60,7 +60,15 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
   CLI de Work OS. `work enter` hace `cd` y regenera el `CLAUDE.md` del
   proyecto con el contexto de su empresa.
 - `herdr`: multiplexor de terminales/agentes (probablemente estás corriendo
-  dentro de un panel de herdr).
+  dentro de un panel de herdr). `claude`/`claudew`/`claudep` son alias de
+  zsh que fijan `CLAUDE_CONFIG_DIR` (perfil default/trabajo/personal); un
+  alias solo se expande en shell interactivo, así que si herdr necesita
+  re-arrancar el agente de una pestaña (por reinicio del server, etc.)
+  ejecuta el binario `claude` directo y pierde ese `CLAUDE_CONFIG_DIR`. Para
+  una pestaña que siempre debe usar el perfil de trabajo o personal, fijá
+  el env var al crear la pestaña en vez de confiar en el alias:
+  `herdr tab create --label "..." --env CLAUDE_CONFIG_DIR=$HOME/.claude-work`
+  (o `.claude-personal`) — así sobrevive a que herdr recupere la sesión.
 - `ags request -i cyberpunk <pedido>`: habla con el HUD (menús, presets:
   `perf full|balanced|performance`, `apps-menu`, `toggle-hud`...).
 - `gh` para GitHub (git usa sus credenciales por https); `rbw` para
