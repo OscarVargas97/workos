@@ -34,8 +34,10 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
   cuanto quede claro cuál es la tarea principal de la sesión (al empezarla
   o al cambiar de tarea) corré
   `herdr tab rename "$HERDR_TAB_ID" "<resumen corto de la tarea>"` para que
-  el título refleje en qué estás trabajando. Si `HERDR_ENV` no está seteado,
-  no corrés dentro de herdr: omitilo.
+  el título refleje en qué estás trabajando. El resumen tiene que ser
+  **corto y bien descriptivo** (2-4 palabras, ideal <30 caracteres): un
+  título largo rompe la navegación por pestañas. Si `HERDR_ENV` no está
+  seteado, no corrés dentro de herdr: omitilo.
 
 ## Dónde está cada cosa
 
