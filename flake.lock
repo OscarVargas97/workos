@@ -43,11 +43,11 @@
     "cyberShell": {
       "flake": false,
       "locked": {
-        "lastModified": 1790361150,
-        "narHash": "sha256-he8gbeno1Zci/uOsjyP+jub49T2jetea9kSBMCb9WEo=",
+        "lastModified": 1790362827,
+        "narHash": "sha256-KKzbcLSr6teQxGbchacOZDdHyJUhHgyFY6VAPNr83Iw=",
         "owner": "OscarVargas97",
         "repo": "cyber-shell",
-        "rev": "98e509c1c059feb536169cf4441aaadf4a9b7c1e",
+        "rev": "4309ddd8628f0c636e89b2310bbf1ee9c897e094",
         "type": "github"
       },
       "original": {
