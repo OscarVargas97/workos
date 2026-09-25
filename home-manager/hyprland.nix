@@ -173,10 +173,12 @@ in
           # coincida con el bind real.
           "$mod SHIFT, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
           "$mod SHIFT, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
-          # G (no U): U ya es "modal aiusage" más abajo.
-          "$mod SHIFT, G, HUD: Actualizar paquetes AUR pendientes, exec, ags request -i cyberpunk aur-upgrade"
-          "$mod SHIFT, J, HUD: Descartar aviso de actualización, exec, ags request -i cyberpunk update-dismiss"
-          "$mod SHIFT, A, HUD: Actualizar CyberArch (nueva versión), exec, ags request -i cyberpunk cyber-update"
+          # G (no U): U ya es "modal aiusage" más abajo. El panel lista
+          # drift de forks (vs su upstream real) y de herramientas del
+          # sistema (inputs de flake.lock vs su origen) - ver
+          # cyber-shell/components/modules/updates.ts.
+          "$mod SHIFT, G, HUD: Abrir panel de actualizaciones (forks/herramientas), exec, ags request -i cyberpunk updates-toggle"
+          "$mod SHIFT, J, HUD: Cerrar panel/aviso de actualizaciones, exec, ags request -i cyberpunk updates-dismiss"
           # 3 planes de animaciones/blur del HUD (pedido explícito: nunca
           # apagar animWheel, el menu de apps - baja el resto + el blur
           # de Hyprland, ver applyPerfPreset en cyber-shell/config.ts).
