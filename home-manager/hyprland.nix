@@ -166,11 +166,14 @@ in
           # gestión nativa de ventanas (fullscreen, forzar cierre, mover
           # ventana), no pasa por cyber-shell.
           #
-          # Los popups que dibujan la tecla en pantalla (aurbar.ts/
-          # notifpopup.ts en cyber-shell) la leen en vivo de `hyprctl binds
-          # -j` (ver keymap.ts ahí) - cambiar la letra acá abajo alcanza,
-          # nunca más hace falta tocar cyber-shell para que el dibujo
-          # coincida con el bind real.
+          # El popup de notificaciones (notifpopup.ts en cyber-shell) dibuja
+          # sus teclas leyéndolas en vivo de `hyprctl binds -j` (ver
+          # keymap.ts ahí) - cambiar la letra acá abajo alcanza, nunca más
+          # hace falta tocar cyber-shell para que el dibujo coincida con el
+          # bind real. El aviso de AUR/Arch de más abajo (G/J) NO usa este
+          # mecanismo: reemplazado por un panel de drift de forks/
+          # herramientas (updates.ts) que no dibuja keycaps, solo se abre y
+          # cierra - no aplica acá.
           "$mod SHIFT, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
           "$mod SHIFT, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
           # G (no U): U ya es "modal aiusage" más abajo. El panel lista
