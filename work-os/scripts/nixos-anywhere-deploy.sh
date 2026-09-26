@@ -176,7 +176,7 @@ docker run --rm --network host \
   -v "$PUB_DIR:/workos:ro" \
   -v nix-store-cache:/nix \
   -v nix-cache-home:/root/.cache \
-  nixos/nix \
+  docker.io/nixos/nix \
   sh -c '
     mkdir -p /root/.ssh && cp /keys/id /root/.ssh/id && chmod 600 /root/.ssh/id &&
     export NIX_CONFIG="tarball-ttl = 0
@@ -347,7 +347,7 @@ docker run --rm --network host \
   -v "$DISK_PASSPHRASE_FILE:/keys/disk-passphrase:ro" \
   -v nix-store-cache:/nix \
   -v nix-cache-home:/root/.cache \
-  nixos/nix \
+  docker.io/nixos/nix \
   sh -c '
     mkdir -p /root/.ssh && cp /keys/id /root/.ssh/id && chmod 600 /root/.ssh/id &&
     # NIX_CONFIG (variable de entorno, no --option): nixos-anywhere invoca
