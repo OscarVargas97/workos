@@ -208,14 +208,15 @@ misma la pida.
 ## 14. Estructura de carpetas para repos reales
 
 **Decisión:** los repos que migra `migrate-pc.sh` van bajo
-`~/Repos/<Empresa>/` (una por empresa) o `~/Repos/Externos/` (repos
-personales/de terceros, sin company-context asociado) — mayúscula
+`~/Repos/<Empresa>/` (una por empresa), `~/Repos/Personal/` (proyectos
+propios, clave reservada `personal`) o `~/Repos/Externos/` (repos de
+terceros); los dos últimos sin company-context asociado — mayúscula
 inicial en la carpeta, clave de empresa en minúscula.
 
 - El mapeo repo→empresa/nombre-destino vive en
   `work-os/repo-companies.conf` del repo privado (perfil de la máquina).
 - Alias de acceso rápido en `home-manager/zsh.nix`: `cdrepos`,
-  `cdexternos`; uno por empresa (`cd<empresa>`) desde el repo privado.
+  `cdexternos`, `cdpersonal`; uno por empresa (`cd<empresa>`) desde el repo privado.
 - Cada repo migrado se registra en `~/.config/work-os/projects.conf`
   del destino con su ruta nueva bajo `Repos/`.
 - `workos` en sí vive en `~/Repos/Externos/workos/` (`workos/`,

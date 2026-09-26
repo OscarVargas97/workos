@@ -48,7 +48,7 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
 | Metadata de cada empresa | `~/Repos/Externos/workos/workos-private/companies/<empresa>` |
 | Secretos de proyectos (cifrados, sin git) | `~/Repos/Externos/workos/vault.enc`; `work vault open` los monta en `vault/` |
 | Repos de trabajo | `~/Repos/<Empresa>/` |
-| Repos personales/de terceros | `~/Repos/Externos/` |
+| Repos propios / de terceros | `~/Repos/Personal/` / `~/Repos/Externos/` |
 | Registro de proyectos para `work` | `~/.config/work-os/{projects,companies}.conf` |
 | Este archivo | generado por Home Manager (`docs/claude-system.md` de `workos`, más lo que sume `workos-private`); editarlo ahí, no acá |
 

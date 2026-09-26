@@ -62,7 +62,7 @@ case "${1:-}" in
       rel="${repo#"$HOME"/}"; lookup_repo_dest "$rel" >/dev/null || echo "$repo"; done)
     [ "${#pending[@]}" -gt 0 ] || { echo "Todos los repos ya están mapeados ($REPO_COMPANIES_FILE)."; exit 0; }
     echo "${#pending[@]} repo(s) sin mapear. Para cada uno:"
-    echo "  - empresa: su clave en minúscula (la de companies.conf), vacío = personal/de terceros (Repos/Externos)"
+    echo "  - empresa: su clave en minúscula (la de companies.conf), personal = proyecto propio (Repos/Personal), vacío = de terceros (Repos/Externos)"
     echo "  - destino: nombre de carpeta (o Grupo/nombre para agrupar repos hermanos), vacío = no migrar"
     for repo in "${pending[@]}"; do
       rel="${repo#"$HOME"/}"

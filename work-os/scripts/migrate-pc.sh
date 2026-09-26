@@ -270,7 +270,7 @@ else
           --exclude dist --exclude build --exclude .next --exclude target; then
           echo "     OK."
           pname="${dest_name//\//-}"
-          if [ -n "$empresa" ]; then
+          if [ -n "$empresa" ] && [ "$empresa" != personal ]; then
             printf '%s=/home/%s/%s=%s\n' "$pname" "$TARGET_USER" "$dest_rel" "$empresa" >> "$NEW_PROJECT_ENTRIES"
           else
             printf '%s=/home/%s/%s\n' "$pname" "$TARGET_USER" "$dest_rel" >> "$NEW_PROJECT_ENTRIES"

@@ -274,7 +274,8 @@ Reglas del mapeo:
 | Si el repo es… | Empresa | Queda en |
 |---|---|---|
 | de una empresa | su clave en minúscula (la de `companies/<empresa>`), ej. `acme` | `~/Repos/Acme/<destino>` |
-| personal o de terceros | vacío | `~/Repos/Externos/<destino>` |
+| un proyecto propio | `personal` | `~/Repos/Personal/<destino>` |
+| de terceros (fork, clon) | vacío | `~/Repos/Externos/<destino>` |
 | un duplicado o algo que no querés | cualquiera, destino `-` | no se migra |
 
 El destino puede ser `Proyecto/repo` para agrupar repos hermanos de un mismo

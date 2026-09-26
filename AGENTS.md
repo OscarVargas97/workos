@@ -169,7 +169,9 @@ privado clonados al lado) decide a dónde va cada repo en la nueva:
      (la misma de `companies/<empresa>` y `COMPANY_NAME`); queda en
      `~/Repos/<Empresa>/<destino>`. Pistas: el dueño del `remote`
      (organización de GitHub de la empresa) o la carpeta donde está hoy.
-   - Personal o de terceros (forks, dotfiles, herramientas) → `empresa`
+   - Proyecto propio de la persona → `empresa` = `personal` (clave
+     reservada, no es una empresa); queda en `~/Repos/Personal/<destino>`.
+   - De terceros (forks, clones, herramientas ajenas) → `empresa`
      vacía; queda en `~/Repos/Externos/<destino>`.
    - Duplicados, copias viejas, `temp/` → destino vacío (no se migra).
    - Repos hermanos de un mismo proyecto → destino `Proyecto/repo`

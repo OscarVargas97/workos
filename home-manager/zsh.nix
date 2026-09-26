@@ -70,11 +70,12 @@ in
       # /home/$USER a mano) - portable para cualquier persona/máquina.
       # ~/Documentos viene de xdg.userDirs (ver common.nix).
       cdgithub = "cd $HOME/Documentos/Repos/My-Github/";
-      # Repos reales de trabajo/personales (migrate-pc.sh, "Repos/<Empresa>"
-      # y "Repos/Externos" - ver DECISIONS.md #14). Un alias por empresa
+      # Repos reales de trabajo/personales (migrate-pc.sh, "Repos/<Empresa>",
+      # "Repos/Personal" y "Repos/Externos" - ver DECISIONS.md #14). Un alias por empresa
       # (cd<empresa>) va en el repo privado.
       cdrepos = "cd $HOME/Repos";
       cdexternos = "cd $HOME/Repos/Externos";
+      cdpersonal = "cd $HOME/Repos/Personal";
       sail = "[ -f sail ] && bash sail || bash vendor/bin/sail";
       # Dos cuentas de Claude Pro (trabajo/personal): CLAUDE_CONFIG_DIR
       # separa las credenciales de cada una, sin relogin en cada switch.

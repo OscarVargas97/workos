@@ -7,7 +7,9 @@
 #   ruta-relativa-a-$HOME=empresa=nombre-destino
 # Reglas (DECISIONS.md #11 y #14):
 #   - empresa: clave en minúscula (la misma de companies.conf); vacía =
-#     repo personal/de terceros -> Repos/Externos/<destino>.
+#     repo de terceros (forks, clones) -> Repos/Externos/<destino>.
+#   - "personal" es clave reservada: proyectos propios -> Repos/Personal/
+#     <destino>, sin company-context (no se registra como empresa).
 #   - con empresa -> Repos/<Empresa>/<destino> (carpeta con mayúscula
 #     inicial; la clave sigue en minúscula).
 #   - destino vacío = no migrar (duplicado/descartado a propósito).
