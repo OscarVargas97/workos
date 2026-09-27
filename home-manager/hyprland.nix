@@ -26,12 +26,19 @@ let
   # el clon local, no github: - el repo es privado y sudo corre como root,
   # sin las credenciales de git del usuario. Si también está clonado este
   # repo público al lado, se usa ese clon en vez del commit pineado en el
-  # flake.lock del privado (cambios locales sin pushear).
+  # flake.lock del privado (cambios locales sin pushear). Antes de compilar
+  # trae lo pusheado desde otra máquina (git pull --ff-only, como el
+  # usuario, no root); si no puede (sin red, ramas divergentes) avisa y
+  # compila lo local.
   # rebuild [switch|boot|test] - switch por defecto.
   rebuild = pkgs.writeShellScriptBin "rebuild" ''
     flake=''${WORKOS_PRIVATE:-$HOME/Repos/Externos/workos/workos-private}
     core=''${WORKOS_CORE:-$flake/../workos}
     [ -f "$flake/flake.nix" ] || { echo "no encuentro el repo privado en $flake (usa WORKOS_PRIVATE=<ruta> rebuild)" >&2; exit 1; }
+    for repo in "$flake" "$core"; do
+      [ -d "$repo/.git" ] || continue
+      git -C "$repo" pull --ff-only -q || echo "rebuild: no pude actualizar $repo, uso lo local" >&2
+    done
     override=()
     [ -f "$core/flake.nix" ] && override=(--override-input workos "git+file://$(realpath "$core")")
     sudo nixos-rebuild "''${1:-switch}" --flake "$flake#$(hostname)" "''${override[@]}"
