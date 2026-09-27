@@ -172,9 +172,13 @@
     };
   };
 
-  # Enchufada, cerrar la tapa solo bloquea: la máquina sigue disponible por
-  # SSH (se usa remota desde otro PC). Con batería sigue suspendiendo.
-  services.logind.settings.Login.HandleLidSwitchExternalPower = "lock";
+  # Cerrar la tapa solo bloquea, con o sin cargador: la máquina sigue
+  # disponible por SSH (se usa remota desde otro PC). Para guardarla en la
+  # mochila hay que suspenderla o apagarla a mano (systemctl suspend).
+  services.logind.settings.Login = {
+    HandleLidSwitch = "lock";
+    HandleLidSwitchExternalPower = "lock";
+  };
 
   environment.systemPackages = with pkgs; [
     git
