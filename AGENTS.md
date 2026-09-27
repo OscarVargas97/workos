@@ -5,6 +5,11 @@ en este repo o que ayudan a una persona a instalar el sistema. La guía para
 humanos es [`README.md`](./README.md); este archivo no la repite, la
 estructura para ejecutarla.
 
+**Antes de leer, analizar o modificar nada:** `git pull --ff-only` en este
+repo y en sus hermanos (`workos`, `workos-private`). Se edita desde varias
+máquinas y la copia local puede estar atrasada. Si el pull falla (cambios
+locales que chocan, ramas divergentes), avisar a la persona antes de seguir.
+
 ## 1. Qué es este repo
 
 Librería pública de un sistema NixOS completo ("Work OS"). **No se instala
