@@ -54,6 +54,12 @@ in
     };
 
     pc.enable = lib.mkEnableOption "comando `pc`: ver en pantalla completa otro PC que transmite con Sunshine (Moonlight)";
+    pc.resolution = mkOption {
+      type = types.nullOr (types.strMatching "[0-9]+x[0-9]+");
+      default = null;
+      example = "1920x1200";
+      description = "Resolución que pide `pc` al PC remoto. null = la del monitor local (a su tamaño real; en paneles de alta densidad conviene una menor de la misma proporción).";
+    };
     hermes.enable = lib.mkEnableOption "comando `hermes-bootstrap`: instala Hermes Agent sobre la suscripción de Claude (home-manager/hermes.nix)";
   };
 

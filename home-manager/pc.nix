@@ -3,7 +3,7 @@
 # audio sigue sonando en el PC remoto (--audio-on-host). Se activa con
 # workos.pc.enable (modules/workos.nix); las reglas de ventana de
 # Moonlight están en hyprland.nix.
-{ pkgs, ... }:
+{ pkgs, osConfig, ... }:
 {
   home.packages = [
     pkgs.moonlight-qt
@@ -35,12 +35,12 @@
       esac
       [ -n "$host" ] || { echo "sin PC emparejado: pc pair <pin> <nombre.local-o-ip>" >&2; exit 1; }
       pgrep -f "$ml stream" >/dev/null && exit 0
-      # Resolución y Hz del monitor con foco (la pantalla de esta máquina),
-      # no un valor fijo; PC_RES=WxH / PC_FPS=N para forzar otros. El PC
+      # Resolución: workos.pc.resolution, o si no la del monitor con foco;
+      # Hz: los del monitor. PC_RES=WxH / PC_FPS=N para forzar otros. El PC
       # remoto tiene que ofrecer ese modo (en Windows: lista de
       # resoluciones del Virtual Display Driver).
       mon=$(hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r 'map(select(.focused))[0] // .[0] | "\(.width)x\(.height) \(.refreshRate | round)"')
-      res=''${PC_RES:-''${mon% *}}; fps=''${PC_FPS:-''${mon#* }}
+      res=''${PC_RES:-${if osConfig.workos.pc.resolution != null then osConfig.workos.pc.resolution else "\${mon% *}"}}; fps=''${PC_FPS:-''${mon#* }}
       [[ $res =~ ^[0-9]+x[0-9]+$ ]] || res=1920x1080
       [[ $fps =~ ^[0-9]+$ ]] || fps=60
       setsid -f $ml stream "$host" Desktop --resolution "$res" --fps "$fps" --display-mode fullscreen --audio-on-host >/dev/null 2>&1
