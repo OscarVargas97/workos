@@ -172,12 +172,18 @@
     };
   };
 
-  # Cerrar la tapa solo bloquea, con o sin cargador: la máquina sigue
-  # disponible por SSH (se usa remota desde otro PC). Para guardarla en la
-  # mochila hay que suspenderla o apagarla a mano (systemctl suspend).
+  # Nunca suspende ni hiberna (tapa, tecla, inactividad, lo que sea): la
+  # máquina tiene que seguir disponible por SSH (se usa remota desde otro
+  # PC). Cerrar la tapa solo bloquea. Para guardarla en la mochila, apagarla.
   services.logind.settings.Login = {
     HandleLidSwitch = "lock";
     HandleLidSwitchExternalPower = "lock";
+  };
+  systemd.sleep.settings.Sleep = {
+    AllowSuspend = "no";
+    AllowHibernation = "no";
+    AllowHybridSleep = "no";
+    AllowSuspendThenHibernate = "no";
   };
 
   environment.systemPackages = with pkgs; [
