@@ -172,6 +172,16 @@
     };
   };
 
+  # Nombres de la red local por mDNS: "<equipo>.local" resuelve solo a su
+  # IP actual (PCs Windows, Macs, otras máquinas workos), sin IPs fijas
+  # ni DNS propio. openFirewall abre 5353/udp: sin eso el firewall tira
+  # las respuestas y nada resuelve.
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
+
   # Nunca suspende ni hiberna (tapa, tecla, inactividad, lo que sea): la
   # máquina tiene que seguir disponible por SSH (se usa remota desde otro
   # PC). Cerrar la tapa solo bloquea. Para guardarla en la mochila, apagarla.

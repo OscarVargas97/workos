@@ -29,11 +29,11 @@
       export DISPLAY=''${DISPLAY:-:0}
       case "$1" in
         off)  pkill -f "$ml stream"; exit ;;
-        pair) exec $ml pair "''${3:?uso: pc pair <pin> <ip-del-pc>}" --pin "$2" ;;
+        pair) exec $ml pair "''${3:?uso: pc pair <pin> <nombre.local-o-ip>}" --pin "$2" ;;
         # alterna pantalla completa <-> ventana (la windowrule solo aplica al abrir)
         full) hyprctl dispatch focuswindow class:com.moonlight_stream.Moonlight >/dev/null && exec hyprctl dispatch fullscreen 0 ;;
       esac
-      [ -n "$host" ] || { echo "sin PC emparejado: pc pair <pin> <ip-del-pc>" >&2; exit 1; }
+      [ -n "$host" ] || { echo "sin PC emparejado: pc pair <pin> <nombre.local-o-ip>" >&2; exit 1; }
       pgrep -f "$ml stream" >/dev/null && exit 0
       setsid -f $ml stream "$host" Desktop --resolution 1920x1080 --fps 60 --display-mode fullscreen --audio-on-host >/dev/null 2>&1
     '')
