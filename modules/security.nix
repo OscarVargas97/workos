@@ -70,7 +70,7 @@ in
     lockTimeout = mkOption {
       type = types.ints.positive;
       default = 300;
-      description = "Segundos de inactividad hasta bloquear la pantalla (suspende al doble).";
+      description = "Segundos de inactividad hasta bloquear y apagar la pantalla (no suspende: sigue disponible por SSH).";
     };
   };
 

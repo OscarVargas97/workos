@@ -378,7 +378,9 @@ in
       };
       listener = [
         { timeout = osConfig.workos.security.lockTimeout; on-timeout = "loginctl lock-session"; }
-        { timeout = 2 * osConfig.workos.security.lockTimeout; on-timeout = "systemctl suspend"; }
+        # Apaga la pantalla junto con el bloqueo, sin suspender: suspendida no
+        # responde por SSH, y la máquina se usa remota desde otro PC.
+        { timeout = osConfig.workos.security.lockTimeout; on-timeout = "hyprctl dispatch dpms off"; on-resume = "hyprctl dispatch dpms on"; }
       ];
     };
   };

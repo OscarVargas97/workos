@@ -172,6 +172,10 @@
     };
   };
 
+  # Enchufada, cerrar la tapa solo bloquea: la máquina sigue disponible por
+  # SSH (se usa remota desde otro PC). Con batería sigue suspendiendo.
+  services.logind.settings.Login.HandleLidSwitchExternalPower = "lock";
+
   environment.systemPackages = with pkgs; [
     git
     vim
