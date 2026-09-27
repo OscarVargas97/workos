@@ -35,7 +35,15 @@
       esac
       [ -n "$host" ] || { echo "sin PC emparejado: pc pair <pin> <nombre.local-o-ip>" >&2; exit 1; }
       pgrep -f "$ml stream" >/dev/null && exit 0
-      setsid -f $ml stream "$host" Desktop --resolution 1920x1080 --fps 60 --display-mode fullscreen --audio-on-host >/dev/null 2>&1
+      # Resolución y Hz del monitor con foco (la pantalla de esta máquina),
+      # no un valor fijo; PC_RES=WxH / PC_FPS=N para forzar otros. El PC
+      # remoto tiene que ofrecer ese modo (en Windows: lista de
+      # resoluciones del Virtual Display Driver).
+      mon=$(hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r 'map(select(.focused))[0] // .[0] | "\(.width)x\(.height) \(.refreshRate | round)"')
+      res=''${PC_RES:-''${mon% *}}; fps=''${PC_FPS:-''${mon#* }}
+      [[ $res =~ ^[0-9]+x[0-9]+$ ]] || res=1920x1080
+      [[ $fps =~ ^[0-9]+$ ]] || fps=60
+      setsid -f $ml stream "$host" Desktop --resolution "$res" --fps "$fps" --display-mode fullscreen --audio-on-host >/dev/null 2>&1
     '')
   ];
 }
