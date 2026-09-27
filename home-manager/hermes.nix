@@ -5,8 +5,8 @@
 # nix-ld ya está prendido). El instalador se vendoriza en
 # work-os/scripts/vendor para no ejecutar código remoto sin pin -
 # actualizarlo es traer una copia nueva a mano, igual que un input de
-# flake. Se corre `hermes-bootstrap` una vez por máquina (después de
-# `claude login`); repetirlo no hace daño.
+# flake. `hermes-bootstrap` corre solo en cada login (servicio de abajo)
+# y también se puede correr a mano; repetirlo no hace daño.
 { pkgs, ... }:
 let
   hermesInstaller = ../work-os/scripts/vendor/hermes-install.sh;
@@ -77,4 +77,17 @@ in
   '';
 
   home.packages = [ hermesBootstrap ];
+
+  # Deja Hermes Agent instalado y con el plugin de suscripción de Claude
+  # sin intervención: oneshot en cada login; la primera vez hace el
+  # trabajo pesado, después son chequeos baratos. `claude login` queda
+  # a mano (OAuth por máquina).
+  systemd.user.services.hermes-agent-bootstrap = {
+    Unit.Description = "Bootstrap de Hermes Agent (plugin de suscripción Claude)";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${hermesBootstrap}/bin/hermes-bootstrap";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 }
