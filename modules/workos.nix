@@ -52,6 +52,8 @@ in
       default = [ ];
       description = "Comandos por entorno para operar infra en AWS/k8s.";
     };
+
+    pc.enable = lib.mkEnableOption "comando `pc`: ver en pantalla completa otro PC que transmite con Sunshine (Moonlight)";
   };
 
   config = {
@@ -67,7 +69,7 @@ in
     };
 
     home-manager.users.${cfg.user.name} = {
-      imports = [ ../home-manager/common.nix ];
+      imports = [ ../home-manager/common.nix ] ++ lib.optional cfg.pc.enable ../home-manager/pc.nix;
       home.username = cfg.user.name;
       home.homeDirectory = "/home/${cfg.user.name}";
       programs.git.settings.user = { inherit (cfg.user) email; name = cfg.user.fullName; };

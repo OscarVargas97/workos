@@ -264,7 +264,7 @@ in
         "$mod, mouse:273, Ventanas (mouse): Redimensionar ventana, resizewindow"
       ];
 
-      # Moonlight (script "pc", home.packages del repo privado) siempre
+      # Moonlight (comando "pc", home-manager/pc.nix) siempre
       # en pantalla completa y sin decoraciones - sin esto Hyprland lo
       # tilea como ventana normal (constatado en vivo: quedaba en 944x524
       # en vez de ocupar el monitor, aunque moonlight-qt reciba
