@@ -54,6 +54,7 @@ in
     };
 
     pc.enable = lib.mkEnableOption "comando `pc`: ver en pantalla completa otro PC que transmite con Sunshine (Moonlight)";
+    hermes.enable = lib.mkEnableOption "comando `hermes-bootstrap`: instala Hermes Agent sobre la suscripción de Claude (home-manager/hermes.nix)";
   };
 
   config = {
@@ -69,7 +70,8 @@ in
     };
 
     home-manager.users.${cfg.user.name} = {
-      imports = [ ../home-manager/common.nix ] ++ lib.optional cfg.pc.enable ../home-manager/pc.nix;
+      imports = [ ../home-manager/common.nix ] ++ lib.optional cfg.pc.enable ../home-manager/pc.nix
+        ++ lib.optional cfg.hermes.enable ../home-manager/hermes.nix;
       home.username = cfg.user.name;
       home.homeDirectory = "/home/${cfg.user.name}";
       programs.git.settings.user = { inherit (cfg.user) email; name = cfg.user.fullName; };
