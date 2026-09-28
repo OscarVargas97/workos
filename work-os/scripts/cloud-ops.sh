@@ -232,6 +232,16 @@ action_argocd() {
   run_k8s kubectl get applications -n "$(argocd_ns)" "$@"
 }
 
+# Headlamp es la app de escritorio (nix run, herramienta de un solo uso -
+# no se instala), no un servicio del cluster: lee el kubeconfig como
+# cualquier cliente k8s (KUBECONFIG/client-go estándar), así que alcanza
+# con correrla adentro de run_k8s para que tenga el túnel + kubeconfig
+# cacheado sin duplicar esa lógica.
+action_headlamp() {
+  echo ">> $NAME: abriendo Headlamp (cerrá la ventana para cortar el túnel)" >&2
+  run_k8s nix run nixpkgs#headlamp
+}
+
 action_argocd_ui() {
   local port=${CLOUDOPS_ARGOCD_UI_PORT:-8080}
   local ns; ns=$(argocd_ns)
@@ -310,6 +320,10 @@ action_tf_graph() {
   xdg-open "$out" >/dev/null 2>&1 &
 }
 
+# $1 = código de salida (0 desde -h/--help, 1 desde una acción inválida) -
+# el panel COMANDOS de cyber-shell (shortcuts.ts) arma sus páginas de
+# `<comando> --help` en vivo y descarta lo que salga con exit != 0, así que
+# --help tiene que terminar en 0 para aparecer ahí igual que git/nix/work.
 usage() {
   cat >&2 <<EOF
 Uso: $NAME <acción> [args]
@@ -321,9 +335,10 @@ Uso: $NAME <acción> [args]
   dump <deployment>                pg_dump -> vault/dumps/$NAME/<deployment>/
   argocd [args kubectl get...]     estado de sync de las apps de ArgoCD
   argocd-ui                        port-forward + abre la UI de ArgoCD en el navegador
+  headlamp                         abre Headlamp (nix run) contra $NAME
   tf-graph                         terraform graph -> svg (solo lectura)
 EOF
-  exit 1
+  exit "${1:-1}"
 }
 
 case "${1:-}" in
@@ -334,6 +349,8 @@ case "${1:-}" in
   dump) shift; action_dump "$@" ;;
   argocd) shift; action_argocd "$@" ;;
   argocd-ui) action_argocd_ui ;;
+  headlamp) action_headlamp ;;
   tf-graph) action_tf_graph ;;
-  *) usage ;;
+  -h|--help) usage 0 ;;
+  *) usage 1 ;;
 esac
