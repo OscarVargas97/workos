@@ -77,10 +77,6 @@ in
       cdexternos = "cd $HOME/Repos/Externos";
       cdpersonal = "cd $HOME/Repos/Personal";
       sail = "[ -f sail ] && bash sail || bash vendor/bin/sail";
-      # Dos cuentas de Claude Pro (trabajo/personal): CLAUDE_CONFIG_DIR
-      # separa las credenciales de cada una, sin relogin en cada switch.
-      claudew = "CLAUDE_CONFIG_DIR=$HOME/.claude-work claude";
-      claudep = "CLAUDE_CONFIG_DIR=$HOME/.claude-personal claude";
     };
 
     initContent = ''
