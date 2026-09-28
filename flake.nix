@@ -3,6 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Solo para el overlay puntual de claude-code (ver más abajo): Hermes
+    # Agent (home-manager/hermes.nix) exige claude-code >=2.1.280 para su
+    # plugin de suscripción, y el canal estable (DECISIONS.md #6) todavía
+    # no lo trae. Sin "follows" a propósito, mismo criterio que "ags" -
+    # el resto del sistema sigue en nixos-26.05.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,7 +35,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, disko, ags, cyberShell, ... }: {
+  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, disko, ags, cyberShell, ... }: {
     # Arma un host completo. Todo lo que es de una persona/empresa/máquina
     # (identidad, hardware, disco, extras) llega en `modules` desde el
     # repo privado de quien lo usa - este repo no conoce a nadie.
@@ -43,6 +49,21 @@
         ./modules/security.nix
         home-manager.nixosModules.home-manager
         {
+          # Overlay puntual: solo claude-code viene de nixpkgs-unstable
+          # (ver comentario del input, arriba). El resto de los paquetes
+          # sigue resolviendo contra nixos-26.05.
+          nixpkgs.overlays = [
+            (final: prev: {
+              # allowUnfree propio: legacyPackages evalúa con su config por
+              # defecto (unfree bloqueado), sin heredar el allowUnfree = true
+              # de hosts/vm/configuration.nix (ese solo aplica a la instancia
+              # principal de nixpkgs).
+              claude-code = (import nixpkgs-unstable {
+                inherit (prev) system;
+                config.allowUnfree = true;
+              }).claude-code;
+            })
+          ];
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.extraSpecialArgs = { inherit ags cyberShell; };
