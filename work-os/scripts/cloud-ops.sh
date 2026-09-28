@@ -205,6 +205,29 @@ action_exec() {
   fi
 }
 
+action_cp() {
+  local svc=${1:?"Uso: $NAME cp <deployment> <local> [remoto]"}
+  local local_path=${2:?"Uso: $NAME cp <deployment> <local> [remoto]"}
+  local remote_path=${3:-/tmp/$(basename "$local_path")}
+  confirm_real_action
+  local rows; rows=$(find_deployment "$svc")
+  if [ -z "$rows" ]; then
+    echo "No encontré el deployment '$svc' en $NAME. Deployments disponibles:" >&2
+    list_deployments >&2
+    exit 1
+  fi
+  local ns dep; read -r ns dep <<<"$rows"
+  # kubectl cp pide un pod, no un deployment - se asume el patrón estándar
+  # de nombre de pod "<deployment>-<hash>" (ReplicaSet+pod), el mismo que
+  # usa Kubernetes por defecto.
+  local pod; pod=$(run_k8s kubectl get pods -n "$ns" --no-headers \
+    | awk -v d="$dep-" 'index($1,d)==1{print $1; exit}')
+  [ -n "$pod" ] || { echo "No encontré un pod corriendo para '$dep' en namespace $ns." >&2; exit 1; }
+  echo ">> $NAME: copiando $local_path -> $dep/$pod:$remote_path (namespace $ns)" >&2
+  run_k8s kubectl cp "$local_path" "$ns/$pod:$remote_path"
+  echo "OK: $remote_path en $pod"
+}
+
 action_migrate() {
   local svc=${1:?"Uso: $NAME migrate <deployment> [--apply]"}
   local apply=false; [ "${2:-}" = --apply ] && apply=true
@@ -334,6 +357,7 @@ Uso: $NAME <acción> [args]
   login                            aws login --profile $AWS_PROFILE
   k <comando kubectl...>           kubectl contra $NAME, túnel puntual
   exec <deployment> [-- comando]   shell (sin comando) o un comando puntual
+  cp <deployment> <local> [remoto] sube un archivo al pod (default /tmp/<nombre>)
   migrate <deployment> [--apply]   --check (dry-run) por defecto
   dump <deployment>                pg_dump -> vault/dumps/$NAME/<deployment>/
   argocd [args kubectl get...]     estado de sync de las apps de ArgoCD
@@ -348,6 +372,7 @@ case "${1:-}" in
   login) shift; action_login "$@" ;;
   k) shift; run_k8s kubectl "$@" ;;
   exec) shift; action_exec "$@" ;;
+  cp) shift; action_cp "$@" ;;
   migrate) shift; action_migrate "$@" ;;
   dump) shift; action_dump "$@" ;;
   argocd) shift; action_argocd "$@" ;;
