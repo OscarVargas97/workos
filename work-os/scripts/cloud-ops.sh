@@ -82,10 +82,13 @@ tunnel_acquire() {
   local count_f="$TUNNELS_DIR/$port.count" pid_f="$TUNNELS_DIR/$port.pid"
   tunnel_lock "$port"
   local count=0; [ -f "$count_f" ] && count=$(<"$count_f")
-  # Contador > 0 pero el PID que lo abrió ya no existe (kill -9 de otra
-  # corrida, o se cayó la terminal sin pasar por tunnel_release): se
-  # autocorrige en vez de quedar leakeado para siempre.
-  if [ "$count" -gt 0 ] && [ -f "$pid_f" ] && ! kill -0 "$(<"$pid_f")" 2>/dev/null; then count=0; fi
+  # Contador > 0 pero no hay nada real detrás: el PID murió (kill -9 de otra
+  # corrida) o el .pid directamente no está (la corrida que lo sostenía se
+  # cayó a mitad de tunnel_release - terminal cerrada de golpe, SSH cortado,
+  # laptop que suspendió - entre borrar el .pid y reescribir el .count). Las
+  # dos formas dejan el mismo contador huérfano, así que las dos se
+  # autocorrigen igual en vez de quedar leakeado para siempre.
+  if [ "$count" -gt 0 ] && { [ ! -f "$pid_f" ] || ! kill -0 "$(<"$pid_f")" 2>/dev/null; }; then count=0; fi
   if [ "$count" -eq 0 ] && ! port_open "$port"; then
     local logf; logf=$(mktemp)
     aws_ ssm start-session "$@" >"$logf" 2>&1 &
