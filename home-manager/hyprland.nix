@@ -271,6 +271,18 @@ in
         "$mod, mouse:273, Ventanas (mouse): Redimensionar ventana, resizewindow"
       ];
 
+      # Teclas multimedia de volumen (rueda/botones del teclado, sin $mod).
+      # e = repite mientras se mantiene apretada, l = funciona con la
+      # pantalla bloqueada (subir/bajar volumen sin desbloquear tiene
+      # sentido). El OSD flotante aparece solo con esto: components/
+      # modules/osd.ts en cyber-shell escucha notify::volume/notify::mute
+      # del speaker por defecto (AstalWp), no hace falta pedírselo al HUD.
+      bindeld = [
+        ",XF86AudioRaiseVolume, Sistema: Subir volumen, exec, wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"
+        ",XF86AudioLowerVolume, Sistema: Bajar volumen, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+        ",XF86AudioMute, Sistema: Silenciar/activar audio, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+      ];
+
       # Moonlight (comando "pc", home-manager/pc.nix) siempre
       # en pantalla completa y sin decoraciones - sin esto Hyprland lo
       # tilea como ventana normal (constatado en vivo: quedaba en 944x524
