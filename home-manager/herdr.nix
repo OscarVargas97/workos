@@ -18,7 +18,7 @@
 { config, lib, pkgs, ... }:
 let
   herdrVersion = "0.9.1-oscar.3";
-  herdrSidebarVersion = "0.13.0-oscar.1";
+  herdrSidebarVersion = "0.13.0-oscar.2";
 
   herdr = pkgs.stdenvNoCC.mkDerivation {
     pname = "herdr";
@@ -44,11 +44,11 @@ let
     owner = "OscarVargas97";
     repo = "herdr-sidebar";
     rev = "v${herdrSidebarVersion}";
-    hash = "sha256-gl4JFwwBlAAOvOz2H3KTpK8lWh37IbwX5LrQKQvRV2s=";
+    hash = "sha256-NwEeU9wFlBJJ9DYTUwPROgjBJp8b5CVZoulSNosEKnw=";
   };
   herdrSidebarBin = pkgs.fetchurl {
     url = "https://github.com/OscarVargas97/herdr-sidebar/releases/download/v${herdrSidebarVersion}/herdr-sidebar-x86_64-unknown-linux-musl";
-    hash = "sha256-MvuMuquUl13KxqxsBj5FJb53m3RMIYyjNcm3v/4woqE=";
+    hash = "sha256-vblEuEQWB/BwM4Zknd7midfaz7wLVvXu+G1JJWGOO38=";
   };
   herdrSidebarPlugin = pkgs.runCommand "herdr-sidebar-plugin-${herdrSidebarVersion}" { } ''
     mkdir -p "$out/plugins/herdr-sidebar/target/release"
