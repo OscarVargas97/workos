@@ -223,6 +223,28 @@ action_migrate() {
   fi
 }
 
+# Namespace de ArgoCD: convención estándar en todos los entornos que lo
+# usan, no depende de la empresa - por eso no es una opción de Nix, solo
+# un override para el caso raro de que alguna instalación lo mueva.
+argocd_ns() { echo "${CLOUDOPS_ARGOCD_NS:-argocd}"; }
+
+action_argocd() {
+  run_k8s kubectl get applications -n "$(argocd_ns)" "$@"
+}
+
+action_argocd_ui() {
+  local port=${CLOUDOPS_ARGOCD_UI_PORT:-8080}
+  local ns; ns=$(argocd_ns)
+  port_open "$port" && { echo "Ya hay algo escuchando en :$port - elegí otro con CLOUDOPS_ARGOCD_UI_PORT." >&2; exit 1; }
+  echo ">> $NAME: ArgoCD UI -> https://localhost:$port (Ctrl+C corta el túnel)" >&2
+  run_k8s kubectl -n "$ns" port-forward svc/argocd-server "$port:443" &
+  local pf=$!
+  trap 'kill "$pf" 2>/dev/null; wait "$pf" 2>/dev/null' EXIT INT TERM
+  wait_port "$port" || exit 1
+  xdg-open "https://localhost:$port" >/dev/null 2>&1 &
+  wait "$pf"
+}
+
 action_dump() {
   local svc=${1:?"Uso: $NAME dump <deployment>"}
   confirm_real_action
@@ -297,6 +319,8 @@ Uso: $NAME <acción> [args]
   exec <deployment> [-- comando]   shell (sin comando) o un comando puntual
   migrate <deployment> [--apply]   --check (dry-run) por defecto
   dump <deployment>                pg_dump -> vault/dumps/$NAME/<deployment>/
+  argocd [args kubectl get...]     estado de sync de las apps de ArgoCD
+  argocd-ui                        port-forward + abre la UI de ArgoCD en el navegador
   tf-graph                         terraform graph -> svg (solo lectura)
 EOF
   exit 1
@@ -308,6 +332,8 @@ case "${1:-}" in
   exec) shift; action_exec "$@" ;;
   migrate) shift; action_migrate "$@" ;;
   dump) shift; action_dump "$@" ;;
+  argocd) shift; action_argocd "$@" ;;
+  argocd-ui) action_argocd_ui ;;
   tf-graph) action_tf_graph ;;
   *) usage ;;
 esac
