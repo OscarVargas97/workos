@@ -15,7 +15,10 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
   editar `/etc`, ni dotfiles sueltos en `~`: no sobreviven y rompen la
   reproducibilidad. Para agregar o cambiar algo permanente: editar el repo
   que corresponda (lógica → `workos`, datos → `workos-private`) →
-  `workos-private/scripts/check.sh` → commit/push → avisar que falta el
+  `workos-private/scripts/check.sh` (usa `../workos` local si existe; si
+  tocaste scripts en `workos` directamente sumá
+  `bash -n work-os/scripts/*.sh` y, para cambios de flake,
+  `nix flake check path:.` ahí) → commit/push → avisar que falta el
   `rebuild`.
 - **Nada personal ni de una empresa en `workos`**: es público. Eso va en
   `workos-private`.
@@ -26,18 +29,32 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
 - **sudo pide contraseña (y un código TOTP del teléfono) y no los tenés.** Todo lo que requiera root (sobre
   todo `nixos-rebuild`) lo corre la persona: pedile `rebuild` o
   `Super+Ctrl+R`. Tu trabajo termina en "valida y está pusheado".
+- **Nunca corras vos comandos de login/autenticación interactiva**
+  (`claude login`, `rbw login`/`unlock`, setup de VPN, etc.): son de la
+  persona, con su segundo factor.
+- **Cambios de autenticación/PAM/TPM/vault**: además de `check.sh`, corré
+  `nix build .#checks.x86_64-linux.security -L` en `workos` antes de dar
+  el cambio por bueno — un PAM roto deja sin sudo.
+- **Opciones de `modules/workos.nix`**: renombrarlas o cambiarles el tipo
+  es un cambio incompatible — documentalo en el `README.md` del módulo y
+  en el template.
+- **Convenciones de estos repos**: código, comentarios y mensajes de
+  commit en español (los comentarios explican el porqué); scripts con
+  `set -euo pipefail`; pineá todo lo externo (inputs de flake, `fetchurl`
+  con hash).
 - **Nada destructivo sin confirmación explícita** (particionar, borrar
   datos, `git push --force`, `herdr server stop` que cierra paneles).
 - **Nada hardcodeado** (rutas de una persona, IPs, secretos). Usar
   `$HOME` y descubrir en runtime.
 - **Mantené el título de la pestaña de herdr al día.** Si `HERDR_ENV=1`, en
   cuanto quede claro cuál es la tarea principal de la sesión (al empezarla
-  o al cambiar de tarea) corré
-  `herdr tab rename "$HERDR_TAB_ID" "<resumen corto de la tarea>"` para que
-  el título refleje en qué estás trabajando. El resumen tiene que ser
-  **corto y bien descriptivo** (2-3 palabras, máximo ~20 caracteres): un
-  título largo rompe la navegación por pestañas. Si `HERDR_ENV` no está
-  seteado, no corrés dentro de herdr: omitilo.
+  o al cambiar de tarea, no en cada turno si sigue siendo la misma) corré
+  `herdr tab rename "$HERDR_TAB_ID" "<resumen corto de la tarea>"` sin
+  anunciarlo (es housekeeping) — si el comando falla (socket caído),
+  ignorá y seguí. El resumen tiene que ser **corto, descriptivo y en
+  minúsculas** (2-3 palabras, máximo ~20 caracteres): un título largo
+  rompe la navegación por pestañas. Si `HERDR_ENV` no está seteado, no
+  corrés dentro de herdr: omitilo.
 
 ## Dónde está cada cosa
 
@@ -71,8 +88,9 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
   (o `.claude-personal`) — así sobrevive a que herdr recupere la sesión.
 - `ags request -i cyberpunk <pedido>`: habla con el HUD (menús, presets:
   `perf full|balanced|performance`, `apps-menu`, `toggle-hud`...).
-- `gh` para GitHub (git usa sus credenciales por https); `rbw` para
-  Bitwarden (nunca manejes la contraseña maestra).
+- `gh` para GitHub (git usa sus credenciales por https; verificá la
+  cuenta activa con `gh auth status` antes de push/clone si convive más
+  de una); `rbw` para Bitwarden (nunca manejes la contraseña maestra).
 
 ## Entorno
 
