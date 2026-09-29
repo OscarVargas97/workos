@@ -28,6 +28,13 @@ in
     (pkgs.python3.withPackages (ps: [ ps.pillow ])) # scripts/gen-map.py (minimapa del sidepanel) necesita Pillow
     pkgs.wirelesstools # iwgetid - SSID de wifi para el widget de red del sidepanel
     pkgs.nerd-fonts.symbols-only # ICONF = "Symbols Nerd Font" en fonts.ts
+    # cmodal.ts (modal de audio: lista de dispositivos, cambio de sink/
+    # source por defecto, mute, volumen por app) corre todo con `pactl`,
+    # no con wpctl - sin este paquete la pestaña "Devices" queda vacía y
+    # no hay forma de cambiar de dispositivo desde el HUD. Solo el
+    # cliente: pipewire-pulse ya expone el socket de PulseAudio, no hace
+    # falta el daemon de pulseaudio.
+    pkgs.pulseaudio
   ];
 
   # Fuentes propias del theme, si no los iconos/logos del HUD caen a un
