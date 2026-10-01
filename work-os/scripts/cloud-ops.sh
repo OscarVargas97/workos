@@ -259,19 +259,37 @@ action_migrate() {
   fi
 }
 
-# seed-run <csv-local> --label <label>: limpia y recarga datos fake en dos
-# sistemas que dependen entre sí a partir del mismo CSV de una corrida -
-# pensado para LMS+KMS en dev (CLOUDOPS_SEED_CONFIG define el "primary", que
-# además exporta un manifiesto de lo que el "secondary" necesita, y el
-# "secondary", que lo consume) pero este script no sabe nada de ninguno de
-# los dos: todo el conocimiento de qué comando corre cada lado vive en la
-# tabla. Las plantillas de comando pueden usar {csv}/{label}/{manifest},
-# que se sustituyen acá por las rutas reales dentro de cada pod.
+# seed-run [--no-clean] <csv> --label <label> [<csv> --label <label> ...]:
+# limpia y recarga datos fake en dos sistemas que dependen entre sí a partir
+# del CSV de una o más corridas - pensado para LMS+KMS en dev
+# (CLOUDOPS_SEED_CONFIG define el "primary", que además exporta un
+# manifiesto de lo que el "secondary" necesita, y el "secondary", que lo
+# consume) pero este script no sabe nada de ninguno de los dos: todo el
+# conocimiento de qué comando corre cada lado vive en la tabla. Las
+# plantillas de comando pueden usar {csv}/{label}/{manifest}, que se
+# sustituyen acá por las rutas reales dentro de cada pod.
+#
+# Varios pares <csv> --label <label> limpian una sola vez y cargan cada
+# corrida en orden (para tener más de una corrida fake conviviendo en dev).
+# --no-clean salta el paso de limpieza entero - para sumar otra corrida más
+# tarde sin perder las que ya están cargadas.
 action_seed_run() {
-  local csv_local=${1:?"Uso: $NAME seed-run <csv> --label <label>"}; shift
-  [ "${1:-}" = --label ] || { echo "Uso: $NAME seed-run <csv> --label <label>" >&2; exit 1; }
-  local label=${2:?"Uso: $NAME seed-run <csv> --label <label>"}
-  [ -f "$csv_local" ] || { echo "No existe el CSV: $csv_local" >&2; exit 1; }
+  local do_clean=true
+  local -a csvs=() labels=() tmp_files=()
+  trap 'rm -f "${tmp_files[@]}"' EXIT
+
+  local usage_msg="Uso: $NAME seed-run [--no-clean] <csv> --label <label> [<csv> --label <label> ...]"
+  while [ $# -gt 0 ]; do
+    if [ "$1" = --no-clean ]; then do_clean=false; shift; continue; fi
+    local csv=$1; shift
+    [ "${1:-}" = --label ] || { echo "$usage_msg" >&2; exit 1; }
+    shift
+    local label=${1:?"$usage_msg"}; shift
+    [ -f "$csv" ] || { echo "No existe el CSV: $csv" >&2; exit 1; }
+    csvs+=("$csv"); labels+=("$label")
+  done
+  [ "${#csvs[@]}" -gt 0 ] || { echo "$usage_msg" >&2; exit 1; }
+
   confirm_real_action
 
   local prim sec
@@ -281,51 +299,57 @@ action_seed_run() {
   IFS=$'\t' read -r p_dep p_clean p_load p_export <<<"$prim"
   IFS=$'\t' read -r s_dep s_clean s_load _s_export <<<"$sec"
 
-  local remote_csv="/tmp/seed-$label.csv"
-  local remote_manifest="/tmp/seed-$label-manifest.csv"
-  local local_manifest; local_manifest=$(mktemp)
-  # EXIT y no RETURN: un error más abajo sale con "exit 1" (no "return"), que
-  # un trap RETURN no vería -- EXIT cubre los dos casos.
-  trap 'rm -f "$local_manifest"' EXIT
+  if [ "$do_clean" = true ]; then
+    echo ">> $NAME: limpiando $p_dep y $s_dep..." >&2
+    action_exec "$p_dep" -- sh -c "$p_clean"
+    action_exec "$s_dep" -- sh -c "$s_clean"
+  else
+    echo ">> $NAME: --no-clean, sumando sobre lo que ya hay en $p_dep y $s_dep..." >&2
+  fi
 
-  subst() {
-    local s=$1
-    s=${s//\{csv\}/$remote_csv}
-    s=${s//\{label\}/$label}
-    s=${s//\{manifest\}/$remote_manifest}
-    echo "$s"
-  }
+  local idx
+  for idx in "${!csvs[@]}"; do
+    local csv_local=${csvs[$idx]} label=${labels[$idx]}
+    local remote_csv="/tmp/seed-$label.csv"
+    local remote_manifest="/tmp/seed-$label-manifest.csv"
+    local local_manifest; local_manifest=$(mktemp)
+    tmp_files+=("$local_manifest")
 
-  echo ">> $NAME: limpiando $p_dep y $s_dep..." >&2
-  action_exec "$p_dep" -- sh -c "$p_clean"
-  action_exec "$s_dep" -- sh -c "$s_clean"
+    subst() {
+      local s=$1
+      s=${s//\{csv\}/$remote_csv}
+      s=${s//\{label\}/$label}
+      s=${s//\{manifest\}/$remote_manifest}
+      echo "$s"
+    }
 
-  echo ">> $NAME: cargando $csv_local en $p_dep (label $label)..." >&2
-  action_cp "$p_dep" "$csv_local" "$remote_csv"
-  action_exec "$p_dep" -- sh -c "$(subst "$p_load")"
+    echo ">> $NAME: cargando $csv_local en $p_dep (label $label)..." >&2
+    action_cp "$p_dep" "$csv_local" "$remote_csv"
+    action_exec "$p_dep" -- sh -c "$(subst "$p_load")"
 
-  echo ">> $NAME: exportando manifiesto de kits desde $p_dep..." >&2
-  action_exec "$p_dep" -- sh -c "$(subst "$p_export")"
+    echo ">> $NAME: exportando manifiesto de kits desde $p_dep ($label)..." >&2
+    action_exec "$p_dep" -- sh -c "$(subst "$p_export")"
 
-  # kubectl cp no entiende deployments, solo pods - mismo truco de nombre
-  # estándar "<deployment>-<hash>" que ya usa action_cp.
-  local p_rows p_ns p_pod_dep p_pod
-  p_rows=$(find_deployment "$p_dep")
-  read -r p_ns p_pod_dep <<<"$p_rows"
-  p_pod=$(run_k8s kubectl get pods -n "$p_ns" --no-headers \
-    | awk -v d="$p_pod_dep-" 'index($1,d)==1{print $1; exit}')
-  [ -n "$p_pod" ] || { echo "No encontré un pod corriendo para '$p_dep'." >&2; exit 1; }
-  run_k8s kubectl cp "$p_ns/$p_pod:$remote_manifest" "$local_manifest"
+    # kubectl cp no entiende deployments, solo pods - mismo truco de nombre
+    # estándar "<deployment>-<hash>" que ya usa action_cp.
+    local p_rows p_ns p_pod_dep p_pod
+    p_rows=$(find_deployment "$p_dep")
+    read -r p_ns p_pod_dep <<<"$p_rows"
+    p_pod=$(run_k8s kubectl get pods -n "$p_ns" --no-headers \
+      | awk -v d="$p_pod_dep-" 'index($1,d)==1{print $1; exit}')
+    [ -n "$p_pod" ] || { echo "No encontré un pod corriendo para '$p_dep'." >&2; exit 1; }
+    run_k8s kubectl cp "$p_ns/$p_pod:$remote_manifest" "$local_manifest"
 
-  echo ">> $NAME: cargando el manifiesto en $s_dep..." >&2
-  action_cp "$s_dep" "$local_manifest" "$remote_manifest"
-  action_exec "$s_dep" -- sh -c "$(subst "$s_load")"
+    echo ">> $NAME: cargando el manifiesto en $s_dep ($label)..." >&2
+    action_cp "$s_dep" "$local_manifest" "$remote_manifest"
+    action_exec "$s_dep" -- sh -c "$(subst "$s_load")"
 
-  echo ">> $NAME: limpiando archivos temporales en los pods..." >&2
-  action_exec "$p_dep" -- rm -f "$remote_csv" "$remote_manifest"
-  action_exec "$s_dep" -- rm -f "$remote_manifest"
+    echo ">> $NAME: limpiando archivos temporales de '$label' en los pods..." >&2
+    action_exec "$p_dep" -- rm -f "$remote_csv" "$remote_manifest"
+    action_exec "$s_dep" -- rm -f "$remote_manifest"
+  done
 
-  echo "OK: datos fake de '$label' cargados en $p_dep y $s_dep." >&2
+  echo "OK: datos fake de [${labels[*]}] cargados en $p_dep y $s_dep." >&2
 }
 
 # Namespace de ArgoCD: convención estándar en todos los entornos que lo
@@ -438,8 +462,10 @@ Uso: $NAME <acción> [args]
   exec <deployment> [-- comando]   shell (sin comando) o un comando puntual
   cp <deployment> <local> [remoto] sube un archivo al pod (default /tmp/<nombre>)
   migrate <deployment> [--apply]   --check (dry-run) por defecto
-  seed-run <csv> --label <label>   limpia y recarga datos fake en los dos
-                                   sistemas de CLOUDOPS_SEED_CONFIG desde ese CSV
+  seed-run [--no-clean] <csv> --label <label> [<csv> --label <label> ...]
+                                   limpia (salvo --no-clean) y carga datos fake
+                                   de una o más corridas en los dos sistemas
+                                   de CLOUDOPS_SEED_CONFIG
   dump <deployment>                pg_dump -> vault/dumps/$NAME/<deployment>/
   argocd [args kubectl get...]     estado de sync de las apps de ArgoCD
   argocd-ui                        port-forward + abre la UI de ArgoCD en el navegador
