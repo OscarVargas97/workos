@@ -47,6 +47,7 @@ in
           terraformDir = mkOption { type = types.nullOr types.str; default = null; description = "Root de Terraform dentro del repo (ej. \"envs/dev\")."; };
           requireConfirmation = mkOption { type = types.bool; default = false; description = "Pedir confirmación tipeada antes de dump/migrate/exec reales."; };
           migrateConfig = mkOption { type = types.nullOr types.path; default = null; description = "tsv: deployment<TAB>db_name<TAB>check_cmd<TAB>apply_cmd."; };
+          seedConfig = mkOption { type = types.nullOr types.path; default = null; description = "tsv: role<TAB>deployment<TAB>clean_cmd<TAB>load_cmd<TAB>export_cmd (role = primary|secondary, ver action_seed_run en cloud-ops.sh)."; };
         };
       });
       default = [ ];
@@ -104,6 +105,7 @@ in
           ${lib.optionalString (e.terraformDir != null) "export CLOUDOPS_TERRAFORM_DIR=${lib.escapeShellArg e.terraformDir}"}
           export CLOUDOPS_REQUIRE_CONFIRM=${if e.requireConfirmation then "true" else "false"}
           ${lib.optionalString (e.migrateConfig != null) "export CLOUDOPS_MIGRATE_CONFIG=${e.migrateConfig}"}
+          ${lib.optionalString (e.seedConfig != null) "export CLOUDOPS_SEED_CONFIG=${e.seedConfig}"}
           exec ${pkgs.bash}/bin/bash ${../work-os/scripts}/cloud-ops.sh "$@"
         '')
         cfg.cloudOps.environments;

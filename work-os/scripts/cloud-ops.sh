@@ -28,6 +28,7 @@ TERRAFORM_REPO="${CLOUDOPS_TERRAFORM_REPO:-}"
 TERRAFORM_DIR="${CLOUDOPS_TERRAFORM_DIR:-}"
 REQUIRE_CONFIRM="${CLOUDOPS_REQUIRE_CONFIRM:-false}"
 MIGRATE_CONFIG="${CLOUDOPS_MIGRATE_CONFIG:-}"
+SEED_CONFIG="${CLOUDOPS_SEED_CONFIG:-}"
 
 BASE="${WORKOS_BASE:-$HOME/Repos/Externos/workos}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/workos-cloud-ops/$NAME"
@@ -184,6 +185,15 @@ migrate_row() {
   awk -F'\t' -v d="$1" '/^#/ || /^[ \t]*$/ {next} $1==d {print $2"\t"$3"\t"$4; found=1} END{exit !found}' "$MIGRATE_CONFIG"
 }
 
+# imprime "deployment<TAB>clean_cmd<TAB>load_cmd<TAB>export_cmd" de
+# CLOUDOPS_SEED_CONFIG para un rol ("primary" o "secondary"). Ver
+# action_seed_run para qué significa cada uno.
+seed_row() {
+  [ -n "$SEED_CONFIG" ] && [ -f "$SEED_CONFIG" ] \
+    || { echo "No hay tabla de seed configurada (CLOUDOPS_SEED_CONFIG)." >&2; exit 1; }
+  awk -F'\t' -v r="$1" '/^#/ || /^[ \t]*$/ {next} $1==r {print $2"\t"$3"\t"$4"\t"$5; found=1} END{exit !found}' "$SEED_CONFIG"
+}
+
 action_login() { exec aws login --profile "$AWS_PROFILE" "$@"; }
 
 action_exec() {
@@ -247,6 +257,75 @@ action_migrate() {
     echo ">> $NAME: --check (dry-run) en $dep (namespace $ns). Para aplicar: $NAME migrate $svc --apply" >&2
     run_k8s kubectl exec "deploy/$dep" -n "$ns" -- sh -c "$check_cmd"
   fi
+}
+
+# seed-run <csv-local> --label <label>: limpia y recarga datos fake en dos
+# sistemas que dependen entre sí a partir del mismo CSV de una corrida -
+# pensado para LMS+KMS en dev (CLOUDOPS_SEED_CONFIG define el "primary", que
+# además exporta un manifiesto de lo que el "secondary" necesita, y el
+# "secondary", que lo consume) pero este script no sabe nada de ninguno de
+# los dos: todo el conocimiento de qué comando corre cada lado vive en la
+# tabla. Las plantillas de comando pueden usar {csv}/{label}/{manifest},
+# que se sustituyen acá por las rutas reales dentro de cada pod.
+action_seed_run() {
+  local csv_local=${1:?"Uso: $NAME seed-run <csv> --label <label>"}; shift
+  [ "${1:-}" = --label ] || { echo "Uso: $NAME seed-run <csv> --label <label>" >&2; exit 1; }
+  local label=${2:?"Uso: $NAME seed-run <csv> --label <label>"}
+  [ -f "$csv_local" ] || { echo "No existe el CSV: $csv_local" >&2; exit 1; }
+  confirm_real_action
+
+  local prim sec
+  prim=$(seed_row primary) || { echo "Sin fila 'primary' en $SEED_CONFIG." >&2; exit 1; }
+  sec=$(seed_row secondary) || { echo "Sin fila 'secondary' en $SEED_CONFIG." >&2; exit 1; }
+  local p_dep p_clean p_load p_export s_dep s_clean s_load _s_export
+  IFS=$'\t' read -r p_dep p_clean p_load p_export <<<"$prim"
+  IFS=$'\t' read -r s_dep s_clean s_load _s_export <<<"$sec"
+
+  local remote_csv="/tmp/seed-$label.csv"
+  local remote_manifest="/tmp/seed-$label-manifest.csv"
+  local local_manifest; local_manifest=$(mktemp)
+  # EXIT y no RETURN: un error más abajo sale con "exit 1" (no "return"), que
+  # un trap RETURN no vería -- EXIT cubre los dos casos.
+  trap 'rm -f "$local_manifest"' EXIT
+
+  subst() {
+    local s=$1
+    s=${s//\{csv\}/$remote_csv}
+    s=${s//\{label\}/$label}
+    s=${s//\{manifest\}/$remote_manifest}
+    echo "$s"
+  }
+
+  echo ">> $NAME: limpiando $p_dep y $s_dep..." >&2
+  action_exec "$p_dep" -- sh -c "$p_clean"
+  action_exec "$s_dep" -- sh -c "$s_clean"
+
+  echo ">> $NAME: cargando $csv_local en $p_dep (label $label)..." >&2
+  action_cp "$p_dep" "$csv_local" "$remote_csv"
+  action_exec "$p_dep" -- sh -c "$(subst "$p_load")"
+
+  echo ">> $NAME: exportando manifiesto de kits desde $p_dep..." >&2
+  action_exec "$p_dep" -- sh -c "$(subst "$p_export")"
+
+  # kubectl cp no entiende deployments, solo pods - mismo truco de nombre
+  # estándar "<deployment>-<hash>" que ya usa action_cp.
+  local p_rows p_ns p_pod_dep p_pod
+  p_rows=$(find_deployment "$p_dep")
+  read -r p_ns p_pod_dep <<<"$p_rows"
+  p_pod=$(run_k8s kubectl get pods -n "$p_ns" --no-headers \
+    | awk -v d="$p_pod_dep-" 'index($1,d)==1{print $1; exit}')
+  [ -n "$p_pod" ] || { echo "No encontré un pod corriendo para '$p_dep'." >&2; exit 1; }
+  run_k8s kubectl cp "$p_ns/$p_pod:$remote_manifest" "$local_manifest"
+
+  echo ">> $NAME: cargando el manifiesto en $s_dep..." >&2
+  action_cp "$s_dep" "$local_manifest" "$remote_manifest"
+  action_exec "$s_dep" -- sh -c "$(subst "$s_load")"
+
+  echo ">> $NAME: limpiando archivos temporales en los pods..." >&2
+  action_exec "$p_dep" -- rm -f "$remote_csv" "$remote_manifest"
+  action_exec "$s_dep" -- rm -f "$remote_manifest"
+
+  echo "OK: datos fake de '$label' cargados en $p_dep y $s_dep." >&2
 }
 
 # Namespace de ArgoCD: convención estándar en todos los entornos que lo
@@ -359,6 +438,8 @@ Uso: $NAME <acción> [args]
   exec <deployment> [-- comando]   shell (sin comando) o un comando puntual
   cp <deployment> <local> [remoto] sube un archivo al pod (default /tmp/<nombre>)
   migrate <deployment> [--apply]   --check (dry-run) por defecto
+  seed-run <csv> --label <label>   limpia y recarga datos fake en los dos
+                                   sistemas de CLOUDOPS_SEED_CONFIG desde ese CSV
   dump <deployment>                pg_dump -> vault/dumps/$NAME/<deployment>/
   argocd [args kubectl get...]     estado de sync de las apps de ArgoCD
   argocd-ui                        port-forward + abre la UI de ArgoCD en el navegador
@@ -374,6 +455,7 @@ case "${1:-}" in
   exec) shift; action_exec "$@" ;;
   cp) shift; action_cp "$@" ;;
   migrate) shift; action_migrate "$@" ;;
+  seed-run) shift; action_seed_run "$@" ;;
   dump) shift; action_dump "$@" ;;
   argocd) shift; action_argocd "$@" ;;
   argocd-ui) action_argocd_ui ;;
