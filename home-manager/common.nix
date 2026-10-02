@@ -100,6 +100,7 @@ in
     ripgrep
     fd
     bat
+    glow
     btop
     fastfetch
     lazygit
