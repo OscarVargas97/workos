@@ -7,7 +7,7 @@
 # actualizarlo es traer una copia nueva a mano, igual que un input de
 # flake. `hermes-bootstrap` corre solo en cada login (servicio de abajo)
 # y también se puede correr a mano; repetirlo no hace daño.
-{ pkgs, ... }:
+{ pkgs, workosServices, ... }:
 let
   hermesInstaller = ../work-os/scripts/vendor/hermes-install.sh;
   hermesBootstrap = pkgs.writeShellScriptBin "hermes-bootstrap" ''
@@ -86,6 +86,7 @@ in
     Unit.Description = "Bootstrap de Hermes Agent (plugin de suscripción Claude)";
     Service = {
       Type = "oneshot";
+      ExecCondition = workosServices.execCondition;
       ExecStart = "${hermesBootstrap}/bin/hermes-bootstrap";
     };
     Install.WantedBy = [ "default.target" ];

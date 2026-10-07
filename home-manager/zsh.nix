@@ -2,7 +2,7 @@
 # DECISIONS.md #9 — traducido a opciones de home-manager, nada de rutas
 # absolutas fijas). NVM/pnpm/conda quedaron afuera a propósito: son
 # runtimes por-proyecto, van a Fase 3 (devenv/direnv), no a la base.
-{ pkgs, ... }:
+{ pkgs, workosServices, ... }:
 let
   # work-os/cli/work empaquetado vía Nix (no una ruta de checkout en
   # disco - "nixos-rebuild switch --flake github:..." baja el flake
@@ -217,6 +217,7 @@ in
     Unit.Description = "Sync de company-context docs (Fase 11, work docs sync)";
     Service = {
       Type = "oneshot";
+      ExecCondition = workosServices.execCondition;
       ExecStart = "${work-docs-sync-bin}/bin/work-docs-sync";
     };
     Install.WantedBy = [ "default.target" ];

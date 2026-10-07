@@ -189,6 +189,11 @@ in
           # cyber-shell/components/modules/updates.ts.
           "$mod SHIFT, G, HUD: Abrir panel de actualizaciones (forks/herramientas), exec, ags request -i cyberpunk updates-toggle"
           "$mod SHIFT, J, HUD: Cerrar panel/aviso de actualizaciones, exec, ags request -i cyberpunk updates-dismiss"
+          # D de "daemons": qué corre en segundo plano (slk, syncs de
+          # login), con arranque/detención y baja persistente desde el
+          # mismo panel - ver cyber-shell/components/modules/services.ts y
+          # services.nix (el registro sale de systemd, no de una lista).
+          "$mod SHIFT, D, HUD: Abrir panel de servicios de fondo, exec, ags request -i cyberpunk services-toggle"
           # 3 planes de animaciones/blur del HUD (pedido explícito: nunca
           # apagar animWheel, el menu de apps - baja el resto + el blur
           # de Hyprland, ver applyPerfPreset en cyber-shell/config.ts).

@@ -2,9 +2,6 @@
 # este repo. Nada de identidad acá (usuario, email, clave SSH); eso vive
 # en modules/workos.nix (valores en el repo privado), que importa este archivo.
 { config, pkgs, ... }:
-let
-  slk = pkgs.callPackage ./pkgs/slk.nix { };
-in
 {
   imports = [
     ./hyprland.nix
@@ -15,6 +12,8 @@ in
     ./devenv.nix
     ./herdr.nix
     ./yazi.nix
+    ./services.nix
+    ./slk.nix
   ];
 
   home.stateVersion = "26.05";
@@ -114,7 +113,6 @@ in
     claude-code
     kubectl
     brave
-    slk
     discord
     # Spotify: el cliente oficial, no una alternativa libre (ncspot/
     # spotify-player), porque esas hablan con la API de Spotify Connect y
@@ -190,8 +188,8 @@ in
   # Brave (Chromium) sin esto renderiza via XWayland en vez de Wayland
   # nativo — capa de compatibilidad de mas, RAM/CPU de mas por ventana.
   # XWayland sigue disponible para lo que realmente lo necesite, esto
-  # solo hace que Brave lo evite. slk (arriba) es TUI, no Electron: no
-  # aplica.
+  # solo hace que Brave lo evite. slk (ver slk.nix) es TUI, no Electron:
+  # no aplica.
   home.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # docker-compose (clásico, el binario real de Docker Inc) busca el
