@@ -283,6 +283,18 @@ in
         ",XF86AudioMute, Sistema: Silenciar/activar audio, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
       ];
 
+      # Teclas de reproducción, vía playerctl (MPRIS): controlan lo que
+      # esté sonando - Spotify (common.nix), mpv, o el navegador. Sin "e"
+      # (repetir) a diferencia del volumen: mantener apretado play/pausa
+      # solo haría parpadear el estado y "siguiente" se saltearía media
+      # playlist. "l" sí: cambiar de pista con la pantalla bloqueada no
+      # muestra ni expone nada.
+      bindld = [
+        ",XF86AudioPlay, Sistema: Reproducir/pausar, exec, playerctl play-pause"
+        ",XF86AudioNext, Sistema: Siguiente pista, exec, playerctl next"
+        ",XF86AudioPrev, Sistema: Pista anterior, exec, playerctl previous"
+      ];
+
       # Moonlight (comando "pc", home-manager/pc.nix) siempre
       # en pantalla completa y sin decoraciones - sin esto Hyprland lo
       # tilea como ventana normal (constatado en vivo: quedaba en 944x524
