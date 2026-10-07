@@ -87,6 +87,12 @@ in
       "image/gif" = "imv.desktop";
       "image/webp" = "imv.desktop";
 
+      # Links "spotify:..." (los que llegan por chat) directo a la app; los
+      # "https://open.spotify.com/..." los sigue tomando Brave, que
+      # redirige a la app por su cuenta. El .desktop del paquete ya declara
+      # este scheme; esto solo fija cuál gana si aparece otro candidato.
+      "x-scheme-handler/spotify" = "spotify.desktop";
+
       "video/mp4" = "mpv.desktop";
       "video/x-matroska" = "mpv.desktop";
       "video/webm" = "mpv.desktop";
@@ -110,6 +116,14 @@ in
     brave
     slk
     discord
+    # Spotify: el cliente oficial, no una alternativa libre (ncspot/
+    # spotify-player), porque esas hablan con la API de Spotify Connect y
+    # exigen cuenta Premium - con cuenta gratis no reproducen nada. El HUD
+    # ya sabe mostrarlo y controlarlo sin configurar nada: cyber-shell trae
+    # AstalMpris (cyber-shell.nix) y las teclas de reproducción van por
+    # playerctl (hyprland.nix), ambos sobre MPRIS, que el cliente oficial
+    # expone solo.
+    spotify
     mpv
     imv
     zathura
