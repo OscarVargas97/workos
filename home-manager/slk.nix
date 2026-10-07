@@ -56,7 +56,7 @@ let
       # unidad saltada así queda con Result=exec-condition (ConditionResult
       # es de las directivas Condition*=, que son otra cosa).
       if ${pkgs.systemd}/bin/systemctl --user show slk.service -p Result --value | ${pkgs.gnugrep}/bin/grep -qx exec-condition; then
-        echo "slk está dado de baja. Reactivalo desde el HUD (Super+Shift+S) o con: workos-services enable slk" >&2
+        echo "slk está dado de baja. Reactivalo desde el HUD (Super+Shift+D) o con: workos-services enable slk" >&2
       else
         echo "slk no pudo arrancar. Mirá: workos-services logs slk" >&2
       fi
