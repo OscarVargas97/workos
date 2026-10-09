@@ -264,7 +264,8 @@ action_migrate() {
 # del CSV de una o más corridas - pensado para LMS+KMS en dev
 # (CLOUDOPS_SEED_CONFIG define el "primary", que además exporta un
 # manifiesto de lo que el "secondary" necesita, y el "secondary", que lo
-# consume) pero este script no sabe nada de ninguno de los dos: todo el
+# consume; el export tiene que salir del CSV solo, porque corre antes de
+# cargar el "primary") pero este script no sabe nada de ninguno de los dos: todo el
 # conocimiento de qué comando corre cada lado vive en la tabla. Las
 # plantillas de comando pueden usar {csv}/{label}/{manifest}, que se
 # sustituyen acá por las rutas reales dentro de cada pod.
@@ -323,10 +324,12 @@ action_seed_run() {
       echo "$s"
     }
 
-    echo ">> $NAME: cargando $csv_local en $p_dep (label $label)..." >&2
+    # El manifiesto sale del CSV (no de lo cargado), así que va primero: el
+    # "secondary" tiene que tener sus datos ANTES de que el "primary" cargue
+    # la corrida, porque esa carga le avisa cosas (en LMS+KMS: registro del
+    # kit y fases de laboratorio) y avisarle sobre algo que todavía no existe
+    # se pierde sin error.
     action_cp "$p_dep" "$csv_local" "$remote_csv"
-    action_exec "$p_dep" -- sh -c "$(subst "$p_load")"
-
     echo ">> $NAME: exportando manifiesto de kits desde $p_dep ($label)..." >&2
     action_exec "$p_dep" -- sh -c "$(subst "$p_export")"
 
@@ -343,6 +346,9 @@ action_seed_run() {
     echo ">> $NAME: cargando el manifiesto en $s_dep ($label)..." >&2
     action_cp "$s_dep" "$local_manifest" "$remote_manifest"
     action_exec "$s_dep" -- sh -c "$(subst "$s_load")"
+
+    echo ">> $NAME: cargando $csv_local en $p_dep (label $label)..." >&2
+    action_exec "$p_dep" -- sh -c "$(subst "$p_load")"
 
     echo ">> $NAME: limpiando archivos temporales de '$label' en los pods..." >&2
     action_exec "$p_dep" -- rm -f "$remote_csv" "$remote_manifest"
