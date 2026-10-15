@@ -4,7 +4,7 @@
 # completá con tus proyectos reales.
 # Formato: nombre=/ruta/absoluta[=empresa] (una línea por proyecto, "="
 # no puede aparecer en el nombre). La empresa es opcional - sin ella,
-# `work enter` genera un CLAUDE.md sin resolver Company Context (Fase 6).
+# `work enter` genera un CLAUDE.local.md sin resolver Company Context (Fase 6).
 # El nombre de empresa tiene que coincidir con una entrada de
 # ~/.config/work-os/companies.conf (ver companies.conf.example).
 #

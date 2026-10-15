@@ -74,8 +74,9 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
 - `rebuild [switch|boot|test]`: aplica `workos-private` (con `../workos`
   local si existe) al host actual (sudo).
 - `work projects | enter <proyecto> | status | secret get <n> --skill <s> | docs <concept_id>`:
-  CLI de Work OS. `work enter` hace `cd` y regenera el `CLAUDE.md` del
-  proyecto con el contexto de su empresa.
+  CLI de Work OS. `work enter` hace `cd` y regenera el `CLAUDE.local.md`
+  del proyecto con el contexto de su empresa (excluido de git; el
+  `CLAUDE.md` del repo queda para las instrucciones versionadas).
 - `herdr`: multiplexor de terminales/agentes (probablemente estás corriendo
   dentro de un panel de herdr). `claude`/`claudew`/`claudep` son alias de
   zsh que fijan `CLAUDE_CONFIG_DIR` (perfil default/trabajo/personal); un

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # work — CLI del Work OS (Fase 5/6): projects/enter/status + secret get.
 # `enter`/`status`/`projects`/`secret get` son de solo lectura o solo
-# generan un archivo derivado (CLAUDE.md) - nada destructivo (ver
+# generan un archivo derivado (CLAUDE.local.md) - nada destructivo (ver
 # Fase 5). `enter` solo imprime la ruta resuelta a stdout
 # - el `cd` real lo hace la función de shell `work()`
 # (home-manager/zsh.nix), porque un binario no puede cambiar el
@@ -24,7 +24,7 @@ usage() {
 Uso: work <comando> [args]
 
   projects            lista los proyectos registrados (nombre y ruta)
-  enter <nombre>      entra al proyecto (cd) y regenera su CLAUDE.md -
+  enter <nombre>      entra al proyecto (cd) y regenera su CLAUDE.local.md -
                        requiere la función de shell `work` (no llamar
                        al binario directo para esto)
   clone <url-o-owner/repo> [--company <empresa>] [--as <nombre>]
@@ -99,10 +99,15 @@ cmd_projects() {
   [ "$found" = 1 ] || echo "No hay proyectos registrados todavía. Agregalos en $PROJECTS_FILE (formato: nombre=/ruta/absoluta[=empresa])." >&2
 }
 
-# Escribe/actualiza <ruta>/CLAUDE.md con el contexto que ya se puede
-# resolver hoy (empresa + ruta a su company-context). El contenido real
-# (reglas, convenciones, systems/services) recién se completa en las
+# Escribe/actualiza <ruta>/CLAUDE.local.md con el contexto que ya se
+# puede resolver hoy (empresa + ruta a su company-context). El contenido
+# real (reglas, convenciones, systems/services) recién se completa en las
 # Fases 7-10 - acá solo el mecanismo de resolución(Fase 6).
+#
+# CLAUDE.local.md y no CLAUDE.md: CLAUDE.md es el archivo versionado del
+# repo (instrucciones del equipo) y regenerarlo lo pisaba en cada `enter`,
+# dejando el repo con cambios. Claude Code lee los dos, así que el
+# contexto de la empresa se suma sin tocar lo del repo.
 generate_claude_md() {
   local name="$1" path="$2" company="$3"
   local company_ctx_path=""
@@ -127,7 +132,35 @@ generate_claude_md() {
     echo "(El contenido real de Company Context - reglas, sistemas, servicios -"
     echo "se completa en las Fases 7-10 del plan; esto todavía es solo el"
     echo "mecanismo de resolución.)"
-  } > "$path/CLAUDE.md"
+  } > "$path/CLAUDE.local.md"
+  exclude_from_git "$path" "CLAUDE.local.md"
+  remove_legacy_claude_md "$path"
+}
+
+# El archivo es local de esta máquina: lo excluimos en .git/info/exclude
+# (no se versiona, no ensucia `git status`) en vez de pedirle a cada repo
+# que lo agregue a su .gitignore. `--git-path` resuelve bien también en
+# worktrees, donde .git es un archivo y no una carpeta.
+exclude_from_git() {
+  local path="$1" file="$2" exclude
+  git -C "$path" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+  exclude="$(git -C "$path" rev-parse --path-format=absolute --git-path info/exclude)"
+  mkdir -p "$(dirname "$exclude")"
+  grep -qxF "$file" "$exclude" 2>/dev/null || echo "$file" >> "$exclude"
+}
+
+# Migración: versiones anteriores escribían CLAUDE.md. Se borra solo si es
+# nuestro (lleva la marca del generador) y git no lo versiona; un CLAUDE.md
+# del repo o escrito a mano no se toca.
+remove_legacy_claude_md() {
+  local path="$1" legacy="$1/CLAUDE.md"
+  [ -f "$legacy" ] || return 0
+  grep -qF 'Generado automáticamente por `work enter`' "$legacy" || return 0
+  if git -C "$path" rev-parse --is-inside-work-tree >/dev/null 2>&1 &&
+     git -C "$path" ls-files --error-unmatch CLAUDE.md >/dev/null 2>&1; then
+    return 0
+  fi
+  rm -f "$legacy"
 }
 
 cmd_enter() {

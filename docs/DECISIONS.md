@@ -275,6 +275,18 @@ tras reiniciar por SSH la máquina queda esperando el PIN en su consola;
 una actualización de BIOS puede pedir la passphrase de recuperación y
 re-enrolar (`post-install-setup.sh` de nuevo).
 
+## 16. `work enter` escribe `CLAUDE.local.md`, no `CLAUDE.md`
+
+**Problema:** `work enter` regeneraba `<proyecto>/CLAUDE.md` con el
+contexto de la empresa. Ese es el mismo archivo que un repo versiona para
+sus instrucciones de equipo, así que cada `enter` las pisaba y dejaba el
+repo con cambios.
+
+**Decisión:** el contexto generado va a `CLAUDE.local.md`, que Claude Code
+lee junto con `CLAUDE.md`. Se excluye vía `.git/info/exclude` (local, sin
+tocar el `.gitignore` del repo). Un `CLAUDE.md` viejo se borra solo si
+tiene la marca del generador y git no lo versiona.
+
 ## Regla general — sin datos personales fijos, prácticas seguras siempre
 
 Aplica a **todo** este repo (código, scripts y comentarios):
