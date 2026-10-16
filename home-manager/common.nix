@@ -111,6 +111,11 @@
     lazygit
     gh
     claude-code
+    # Barra de estado de Claude Code (badge de ponytail + skill activa); la
+    # activa "statusLine" en ~/.claude/settings.json.
+    (writeShellScriptBin "claude-statusline" ''
+      PATH=${lib.makeBinPath [ jq ]}:$PATH exec ${bash}/bin/bash ${../work-os/scripts/claude-statusline.sh} "$@"
+    '')
     kubectl
     brave
     discord
