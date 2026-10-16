@@ -17,7 +17,7 @@
 # como ideal.
 { config, lib, pkgs, ... }:
 let
-  herdrVersion = "0.9.1-oscar.3";
+  herdrVersion = "0.9.5-oscar.1";
   herdrSidebarVersion = "0.13.0-oscar.2";
 
   herdr = pkgs.stdenvNoCC.mkDerivation {
@@ -25,7 +25,7 @@ let
     version = herdrVersion;
     src = pkgs.fetchurl {
       url = "https://github.com/OscarVargas97/herdr/releases/download/v${herdrVersion}/herdr-x86_64-unknown-linux-musl";
-      hash = "sha256-c47yRI97M/VYsHxWuTrceezMCRJKNZfdJpkGBREZ86U=";
+      hash = "sha256-lyhYn0FodB321YUPbsFOKG3or+14h5PPYDKuhEeNEiY=";
     };
     dontUnpack = true;
     installPhase = ''
