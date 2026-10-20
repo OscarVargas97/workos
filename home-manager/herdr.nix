@@ -71,6 +71,26 @@ in
     $DRY_RUN_CMD ${herdr}/bin/herdr plugin link "${herdrSidebarPlugin}/plugins/herdr-sidebar" || true
   '';
 
+  # El servidor de herdr sobrevive al switch: sin esto sigue corriendo el
+  # binario viejo y los clientes nuevos caen al protocolo viejo (pasó con
+  # 0.9.1: scroll remoto lentísimo con cliente 0.9.5). Solo se detiene
+  # cuando cambia la versión; el próximo `herdr` (o el cliente remoto)
+  # levanta el nuevo y restaura los agentes. Cubre la sesión default y
+  # las sesiones con nombre (~/.config/herdr/sessions/<n>/herdr.sock).
+  home.activation.restartHerdrServer = lib.hm.dag.entryAfter [ "linkHerdrSidebar" ] ''
+    MARK="${config.home.homeDirectory}/.local/state/herdr/server-version"
+    if [ "$(cat "$MARK" 2>/dev/null)" != "${herdrVersion}" ]; then
+      $VERBOSE_ECHO "herdr: versión nueva (${herdrVersion}), deteniendo servidores viejos..."
+      $DRY_RUN_CMD ${herdr}/bin/herdr server stop || true
+      for sock in "${config.xdg.configHome}"/herdr/sessions/*/herdr.sock; do
+        [ -S "$sock" ] || continue
+        $DRY_RUN_CMD ${herdr}/bin/herdr --session "$(basename "$(dirname "$sock")")" server stop || true
+      done
+      $DRY_RUN_CMD mkdir -p "$(dirname "$MARK")"
+      $DRY_RUN_CMD bash -c "printf '%s' '${herdrVersion}' > \"$MARK\""
+    fi
+  '';
+
   # El sidebar arranca a la izquierda por default (dock_right=false, ver
   # src/state.rs del plugin) y la posición se persiste en un state.json
   # propio del plugin, no en config.toml - gestionarlo 100% con Nix (ej.
