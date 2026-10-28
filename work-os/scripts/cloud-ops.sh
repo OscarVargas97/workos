@@ -435,7 +435,10 @@ action_argocd_ui() {
 }
 
 action_dump() {
-  local svc=${1:?"Uso: $NAME dump <deployment>"}
+  local svc=${1:?"Uso: $NAME dump <deployment> [-- args de pg_dump]"}; shift
+  # Lo que venga después de "--" va tal cual a pg_dump (ej.
+  # --exclude-table-data=<tabla> para no bajar catálogos enormes).
+  [ "${1:-}" = -- ] && shift
   confirm_real_action
   [ -n "$BASTION_TAG" ] && [ -n "$RDS_IDENTIFIER" ] && [ -n "$DB_SECRET_PREFIX" ] \
     || { echo "Acceso a base de datos no configurado todavía para $NAME." >&2; exit 1; }
@@ -470,7 +473,7 @@ action_dump() {
   echo ">> $NAME: dump de $db_name ($svc) -> $out" >&2
   with_tunnel 5432 --target "$bastion" --document-name AWS-StartPortForwardingSessionToRemoteHost \
     --parameters "host=$rds_host,portNumber=5432,localPortNumber=5432" -- \
-    env PGPASSWORD="$pass" pg_dump -h 127.0.0.1 -p 5432 -U "$user" -d "$db_name" --no-owner -f "$out"
+    env PGPASSWORD="$pass" pg_dump -h 127.0.0.1 -p 5432 -U "$user" -d "$db_name" --no-owner -f "$out" "$@"
   chmod 600 "$out"
   echo "OK: $out"
 }
@@ -516,7 +519,7 @@ Uso: $NAME <acción> [args]
                                    limpia (salvo --no-clean) y carga datos fake
                                    de una o más corridas en los dos sistemas
                                    de CLOUDOPS_SEED_CONFIG
-  dump <deployment>                pg_dump -> vault/dumps/$NAME/<deployment>/
+  dump <deployment> [-- args]      pg_dump -> vault/dumps/$NAME/<deployment>/
   argocd [args kubectl get...]     estado de sync de las apps de ArgoCD
   argocd-ui                        port-forward + abre la UI de ArgoCD en el navegador
   headlamp                         abre Headlamp (nix run) contra $NAME

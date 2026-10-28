@@ -94,7 +94,9 @@ in
       # global).
       home.packages = map
         (e: pkgs.writeShellScriptBin e.name ''
-          export PATH=${lib.makeBinPath [ pkgs.postgresql pkgs.jq pkgs.util-linux ]}:$PATH
+          # pg_dump se niega a volcar un servidor de versión mayor que la suya
+          # (y sí puede con uno menor): fijar la última mayor, no el default.
+          export PATH=${lib.makeBinPath [ pkgs.postgresql_18 pkgs.jq pkgs.util-linux ]}:$PATH
           export CLOUDOPS_NAME=${lib.escapeShellArg e.name}
           export CLOUDOPS_ENV_LABEL=${lib.escapeShellArg e.envLabel}
           export CLOUDOPS_AWS_PROFILE=${lib.escapeShellArg e.awsProfile}
