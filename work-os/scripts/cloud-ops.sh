@@ -22,6 +22,8 @@ AWS_ACCOUNT_ID="${CLOUDOPS_AWS_ACCOUNT_ID:?falta CLOUDOPS_AWS_ACCOUNT_ID}"
 REGION="${CLOUDOPS_REGION:-us-east-1}"
 K3S_TAG="${CLOUDOPS_K3S_TAG:-}"
 BASTION_TAG="${CLOUDOPS_BASTION_TAG:-}"
+K8S_API_LB="${CLOUDOPS_K8S_API_LB:-}"
+K8S_API_DOCUMENT="${CLOUDOPS_K8S_API_DOCUMENT:-AWS-StartPortForwardingSessionToRemoteHost}"
 RDS_IDENTIFIER="${CLOUDOPS_RDS_IDENTIFIER:-}"
 DB_SECRET_PREFIX="${CLOUDOPS_DB_SECRET_PREFIX:-}"
 TERRAFORM_REPO="${CLOUDOPS_TERRAFORM_REPO:-}"
@@ -155,14 +157,25 @@ run_k8s() {
   local id; id=$(find_instance "$K3S_TAG")
   [ -n "$id" ] || { echo "No encuentro el nodo k3s ($K3S_TAG) corriendo en $NAME." >&2; exit 1; }
   [ -f "$KUBECONFIG_CACHE" ] || fetch_kubeconfig "$id"
-  if ! with_tunnel 6443 --target "$id" --document-name AWS-StartPortForwardingSession \
-      --parameters portNumber=6443,localPortNumber=6443 -- \
-      env KUBECONFIG="$KUBECONFIG_CACHE" "$@"; then
+  # Con varios nodos el túnel no va a uno solo (perderlo corta la sesión):
+  # va por el bastion al load balancer interno de la API. El kubeconfig
+  # apunta igual a 127.0.0.1:6443, que k3s incluye en los SANs del cert.
+  local tunnel=(--target "$id" --document-name AWS-StartPortForwardingSession
+    --parameters portNumber=6443,localPortNumber=6443)
+  if [ -n "$K8S_API_LB" ]; then
+    [ -n "$BASTION_TAG" ] || { echo "CLOUDOPS_K8S_API_LB requiere el bastion configurado." >&2; exit 1; }
+    local bastion lb_dns
+    bastion=$(find_instance "$BASTION_TAG")
+    [ -n "$bastion" ] || { echo "No encontré el bastion '$BASTION_TAG' corriendo en $NAME." >&2; exit 1; }
+    lb_dns=$(aws_ elbv2 describe-load-balancers --names "$K8S_API_LB" \
+      --query 'LoadBalancers[0].DNSName' --output text)
+    tunnel=(--target "$bastion" --document-name "$K8S_API_DOCUMENT"
+      --parameters "host=$lb_dns,portNumber=6443,localPortNumber=6443")
+  fi
+  if ! with_tunnel 6443 "${tunnel[@]}" -- env KUBECONFIG="$KUBECONFIG_CACHE" "$@"; then
     echo "Falló - probando con un kubeconfig nuevo..." >&2
     fetch_kubeconfig "$id"
-    with_tunnel 6443 --target "$id" --document-name AWS-StartPortForwardingSession \
-      --parameters portNumber=6443,localPortNumber=6443 -- \
-      env KUBECONFIG="$KUBECONFIG_CACHE" "$@"
+    with_tunnel 6443 "${tunnel[@]}" -- env KUBECONFIG="$KUBECONFIG_CACHE" "$@"
   fi
 }
 

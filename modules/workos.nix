@@ -41,6 +41,8 @@ in
           region = mkOption { type = types.str; default = "us-east-1"; description = "Región AWS."; };
           k3sNodeTag = mkOption { type = types.nullOr types.str; default = null; description = "Tag Name de la EC2 con el nodo k3s. null = sin kubectl/exec/migrate en este entorno."; };
           bastionTag = mkOption { type = types.nullOr types.str; default = null; description = "Tag Name del bastion SSM hacia RDS. null = sin dump en este entorno."; };
+          k8sApiLoadBalancer = mkOption { type = types.nullOr types.str; default = null; description = "Nombre del load balancer interno de la API de k3s (cluster de varios nodos). Si se define, kubectl va por el bastion a ese LB en vez de directo al nodo; requiere bastionTag."; };
+          k8sApiTunnelDocument = mkOption { type = types.nullOr types.str; default = null; description = "Documento SSM para el túnel a k8sApiLoadBalancer (null = AWS-StartPortForwardingSessionToRemoteHost)."; };
           rdsIdentifier = mkOption { type = types.nullOr types.str; default = null; description = "DBInstanceIdentifier de RDS."; };
           dbSecretPrefix = mkOption { type = types.nullOr types.str; default = null; description = "Prefijo de Secrets Manager: \"<prefijo>/db/<nombre>\"."; };
           terraformRepo = mkOption { type = types.nullOr types.str; default = null; description = "\"owner/repo\" de Terraform. null = sin tf-graph."; };
@@ -99,6 +101,8 @@ in
           export CLOUDOPS_REGION=${lib.escapeShellArg e.region}
           ${lib.optionalString (e.k3sNodeTag != null) "export CLOUDOPS_K3S_TAG=${lib.escapeShellArg e.k3sNodeTag}"}
           ${lib.optionalString (e.bastionTag != null) "export CLOUDOPS_BASTION_TAG=${lib.escapeShellArg e.bastionTag}"}
+          ${lib.optionalString (e.k8sApiLoadBalancer != null) "export CLOUDOPS_K8S_API_LB=${lib.escapeShellArg e.k8sApiLoadBalancer}"}
+          ${lib.optionalString (e.k8sApiTunnelDocument != null) "export CLOUDOPS_K8S_API_DOCUMENT=${lib.escapeShellArg e.k8sApiTunnelDocument}"}
           ${lib.optionalString (e.rdsIdentifier != null) "export CLOUDOPS_RDS_IDENTIFIER=${lib.escapeShellArg e.rdsIdentifier}"}
           ${lib.optionalString (e.dbSecretPrefix != null) "export CLOUDOPS_DB_SECRET_PREFIX=${lib.escapeShellArg e.dbSecretPrefix}"}
           ${lib.optionalString (e.terraformRepo != null) "export CLOUDOPS_TERRAFORM_REPO=${lib.escapeShellArg e.terraformRepo}"}
