@@ -23,6 +23,10 @@ REGION="${CLOUDOPS_REGION:-us-east-1}"
 K3S_TAG="${CLOUDOPS_K3S_TAG:-}"
 BASTION_TAG="${CLOUDOPS_BASTION_TAG:-}"
 K8S_API_LB="${CLOUDOPS_K8S_API_LB:-}"
+# Puerto local del túnel a la API: distinto por entorno, para que un túnel
+# abierto de un entorno nunca lo reutilice otro (el contador es por entorno,
+# pero el puerto es de toda la máquina).
+K8S_LOCAL_PORT="${CLOUDOPS_K8S_LOCAL_PORT:-6443}"
 K8S_API_DOCUMENT="${CLOUDOPS_K8S_API_DOCUMENT:-AWS-StartPortForwardingSessionToRemoteHost}"
 RDS_IDENTIFIER="${CLOUDOPS_RDS_IDENTIFIER:-}"
 DB_SECRET_PREFIX="${CLOUDOPS_DB_SECRET_PREFIX:-}"
@@ -94,7 +98,9 @@ tunnel_acquire() {
   if [ "$count" -gt 0 ] && { [ ! -f "$pid_f" ] || ! kill -0 "$(<"$pid_f")" 2>/dev/null; }; then count=0; fi
   if [ "$count" -eq 0 ] && ! port_open "$port"; then
     local logf; logf=$(mktemp)
-    aws_ ssm start-session "$@" >"$logf" 2>&1 &
+    # En su propia sesión (setsid): así el release mata el grupo entero, con
+    # el session-manager-plugin que aws lanza como nieto y no recibe la señal.
+    setsid aws --profile "$AWS_PROFILE" --region "$REGION" ssm start-session "$@" >"$logf" 2>&1 &
     echo "$!" > "$pid_f"
     if ! wait_port "$port"; then
       cat "$logf" >&2; rm -f "$logf" "$pid_f"
@@ -118,7 +124,9 @@ tunnel_release() {
     # que ya estaba ahí): se deja como estaba, no se mata nada ajeno.
     if [ -f "$pid_f" ]; then
       local pid; pid=$(<"$pid_f")
-      kill "$pid" 2>/dev/null || true
+      # El grupo entero (ver setsid en tunnel_acquire): matar solo a aws deja
+      # el plugin huérfano escuchando en el puerto.
+      kill -TERM -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
       wait "$pid" 2>/dev/null || true
       rm -f "$pid_f"
     fi
@@ -134,8 +142,15 @@ with_tunnel() {
   while [ "$1" != -- ]; do ssm_args+=("$1"); shift; done
   shift
   tunnel_acquire "$port" "${ssm_args[@]}" || return 1
-  trap 'tunnel_release "'"$port"'"' RETURN INT TERM
-  "$@"
+  # Release explícito y una sola vez: un trap RETURN puesto acá queda armado y
+  # vuelve a disparar cuando retorna la función que llamó a with_tunnel, lo
+  # que descontaba dos veces el túnel compartido.
+  trap 'tunnel_release "'"$port"'"; exit 130' INT TERM
+  local rc=0
+  "$@" || rc=$?
+  trap - INT TERM
+  tunnel_release "$port"
+  return "$rc"
 }
 
 fetch_kubeconfig() {
@@ -145,13 +160,24 @@ fetch_kubeconfig() {
     --query Command.CommandId --output text)
   aws_ ssm wait command-executed --command-id "$cmdid" --instance-id "$id" 2>/dev/null || true
   aws_ ssm get-command-invocation --command-id "$cmdid" --instance-id "$id" \
-    --query StandardOutputContent --output text > "$KUBECONFIG_CACHE"
+    --query StandardOutputContent --output text \
+    | sed "s|https://127.0.0.1:6443|https://127.0.0.1:$K8S_LOCAL_PORT|" > "$KUBECONFIG_CACHE"
   chmod 600 "$KUBECONFIG_CACHE"
 }
 
-# run_k8s <comando...>: túnel puntual a 6443 + KUBECONFIG resuelto. Si falla
-# (ej. el nodo se reemplazó y cambió la CA), refresca el kubeconfig una vez
-# y reintenta - perderlo no cuesta nada, es una caché.
+# Sale con 97 si la API no responde con este kubeconfig (sin correr nada) y,
+# si responde, corre el comando una sola vez. Así run_k8s distingue "el
+# kubeconfig quedó viejo" de "el comando falló": antes reintentaba ante
+# cualquier error y un migrate/seed que fallaba a mitad se ejecutaba dos veces.
+k8s_probe_then_run() {
+  KUBECONFIG="$KUBECONFIG_CACHE" kubectl get --raw /readyz >/dev/null 2>&1 || return 97
+  env KUBECONFIG="$KUBECONFIG_CACHE" "$@"
+}
+
+# run_k8s <comando...>: túnel puntual a la API + KUBECONFIG resuelto. Si la API
+# no acepta el kubeconfig (ej. el nodo se reemplazó y cambió la CA), lo
+# refresca una vez y reintenta - perderlo no cuesta nada, es una caché. Un
+# error del comando en sí nunca se reintenta.
 run_k8s() {
   [ -n "$K3S_TAG" ] || { echo "No hay nodo k3s configurado para $NAME." >&2; exit 1; }
   local id; id=$(find_instance "$K3S_TAG")
@@ -159,9 +185,9 @@ run_k8s() {
   [ -f "$KUBECONFIG_CACHE" ] || fetch_kubeconfig "$id"
   # Con varios nodos el túnel no va a uno solo (perderlo corta la sesión):
   # va por el bastion al load balancer interno de la API. El kubeconfig
-  # apunta igual a 127.0.0.1:6443, que k3s incluye en los SANs del cert.
+  # apunta igual a 127.0.0.1, que k3s incluye en los SANs del cert.
   local tunnel=(--target "$id" --document-name AWS-StartPortForwardingSession
-    --parameters portNumber=6443,localPortNumber=6443)
+    --parameters "portNumber=6443,localPortNumber=$K8S_LOCAL_PORT")
   if [ -n "$K8S_API_LB" ]; then
     [ -n "$BASTION_TAG" ] || { echo "CLOUDOPS_K8S_API_LB requiere el bastion configurado." >&2; exit 1; }
     local bastion lb_dns
@@ -170,13 +196,18 @@ run_k8s() {
     lb_dns=$(aws_ elbv2 describe-load-balancers --names "$K8S_API_LB" \
       --query 'LoadBalancers[0].DNSName' --output text)
     tunnel=(--target "$bastion" --document-name "$K8S_API_DOCUMENT"
-      --parameters "host=$lb_dns,portNumber=6443,localPortNumber=6443")
+      --parameters "host=$lb_dns,portNumber=6443,localPortNumber=$K8S_LOCAL_PORT")
   fi
-  if ! with_tunnel 6443 "${tunnel[@]}" -- env KUBECONFIG="$KUBECONFIG_CACHE" "$@"; then
-    echo "Falló - probando con un kubeconfig nuevo..." >&2
+  local rc=0
+  with_tunnel "$K8S_LOCAL_PORT" "${tunnel[@]}" -- k8s_probe_then_run "$@" || rc=$?
+  if [ "$rc" -eq 97 ]; then
+    echo "La API no aceptó el kubeconfig - probando con uno nuevo..." >&2
     fetch_kubeconfig "$id"
-    with_tunnel 6443 "${tunnel[@]}" -- env KUBECONFIG="$KUBECONFIG_CACHE" "$@"
+    rc=0
+    with_tunnel "$K8S_LOCAL_PORT" "${tunnel[@]}" -- k8s_probe_then_run "$@" || rc=$?
+    [ "$rc" -ne 97 ] || echo "La API de $NAME sigue sin responder por el túnel." >&2
   fi
+  return "$rc"
 }
 
 # imprime "namespace deployment" o nada si no existe. Sin redirigir stderr acá
