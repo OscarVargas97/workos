@@ -43,6 +43,21 @@ mkdir -p "$CACHE_DIR"
 
 aws_() { aws --profile "$AWS_PROFILE" --region "$REGION" "$@"; }
 
+# La cuenta configurada es solo un dato: "aws login --profile X" guarda la
+# cuenta que se haya elegido en el navegador, aunque sea otra. Sin esta
+# verificación, un login de prod hecho en la cuenta de dev deja a "<x>-prod"
+# operando contra dev (o al revés) mientras el aviso muestra la cuenta esperada.
+check_account() {
+  local actual
+  actual=$(aws_ sts get-caller-identity --query Account --output text) \
+    || { echo "Sin sesión AWS válida en $AWS_PROFILE: corré $NAME login." >&2; exit 1; }
+  [ "$actual" = "$AWS_ACCOUNT_ID" ] || {
+    echo "La sesión de $AWS_PROFILE es de la cuenta $actual, no de $AWS_ACCOUNT_ID ($NAME)." >&2
+    echo "Corré $NAME login y elegí la cuenta $AWS_ACCOUNT_ID en el navegador." >&2
+    exit 1
+  }
+}
+
 # Se pide para cualquier acción que toque algo real (no para login/tf-graph,
 # que son de solo lectura) - el entorno va tipeado a mano, no un "s/n".
 confirm_real_action() {
@@ -527,6 +542,11 @@ Uso: $NAME <acción> [args]
 EOF
   exit "${1:-1}"
 }
+
+case "${1:-}" in
+  login|-h|--help|tf-graph|"") ;;
+  *) check_account ;;
+esac
 
 case "${1:-}" in
   login) shift; action_login "$@" ;;
