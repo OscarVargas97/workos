@@ -18,6 +18,10 @@ COMPANIES_FILE="${WORK_OS_COMPANIES_FILE:-$HOME/.config/work-os/companies.conf}"
 # editables a mano): es seguridad, tiene que venir del repo versionado,
 # no de un archivo que cualquier proceso local podría tocar.
 SECRETS_POLICY_FILE="${WORK_OS_SECRETS_POLICY_FILE:-$HOME/.config/work-os/secrets-policy.yaml}"
+# Base de ia-workspace (clon con scripts/ws.py) y carpeta donde viven los
+# espacios; ambos sobreescribibles, como el resto.
+IA_WORKSPACE_DIR="${WORK_OS_IA_WORKSPACE:-$HOME/Repos/Externos/ia-workspace}"
+ESPACIOS_DIR="${WORK_OS_ESPACIOS_DIR:-$HOME/Espacios}"
 
 usage() {
   cat >&2 <<'EOF'
@@ -35,6 +39,11 @@ Uso: work <comando> [args]
                        (repos privados vía la cuenta activa de gh); una
                        URL usa `git clone`. Requiere la función de shell
                        `work`, igual que `enter`
+  espacio <nombre>     crea el espacio <nombre> en $WORK_OS_ESPACIOS_DIR
+                        (default ~/Espacios), lo registra en herdr y lo
+                        abre: llama a `ws.py nuevo` de ia-workspace
+                        (base en $WORK_OS_IA_WORKSPACE, default
+                        ~/Repos/Externos/ia-workspace)
   status               info del proyecto actual: git, direnv
   secret get <nombre> --skill <skill>
                         pide un secreto vía Bitwarden (rbw), sujeto a
@@ -226,6 +235,17 @@ cmd_clone() {
   echo "$dest"
 }
 
+# Delega todo en `ws.py nuevo` de ia-workspace (crea, registra en herdr y
+# abre); acá solo se ubica la base y la carpeta destino.
+cmd_espacio() {
+  local name="${1:-}"
+  [ -z "$name" ] && { echo "Uso: work espacio <nombre>" >&2; return 1; }
+  local py
+  py="$(command -v python3 || command -v python)" || { echo "Falta python en este sistema." >&2; return 1; }
+  [ -f "$IA_WORKSPACE_DIR/scripts/ws.py" ] || { echo "No encuentro ia-workspace en $IA_WORKSPACE_DIR (ajusta WORK_OS_IA_WORKSPACE)." >&2; return 1; }
+  "$py" "$IA_WORKSPACE_DIR/scripts/ws.py" nuevo "$ESPACIOS_DIR/$name" >&2
+}
+
 cmd_status() {
   echo "Directorio actual: $PWD"
   local match
@@ -308,6 +328,7 @@ case "${1:-}" in
   projects) cmd_projects ;;
   enter) shift; cmd_enter "$@" ;;
   clone) shift; cmd_clone "$@" ;;
+  espacio) shift; cmd_espacio "$@" ;;
   status) cmd_status ;;
   secret)
     shift
