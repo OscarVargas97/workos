@@ -409,8 +409,8 @@ repo privado de prueba creado desde el template.
 - **Editor:** Neovim como IDE y editor por defecto.
 - **Desarrollo:** devenv/direnv por proyecto, Podman compatible con Docker,
   Node 22, pnpm, uv (Python), DBeaver, AWS CLI, GNOME Boxes.
-- **Agentes de IA:** Claude Code, [herdr](https://herdr.dev) (sesiones
-  persistentes de agentes), CLI `work`, MCP de secretos con allowlist.
+- **Agentes de IA:** Claude Code (worktrees y agentes desde
+  [Orca](https://github.com/stablyai/orca)), CLI `work`, MCP de secretos con allowlist.
 - **Secretos:** Bitwarden (`rbw` para scripts, app gráfica para uso manual).
 - **Seguridad:** disco cifrado (LUKS + TPM2 opcional), firewall, SSH solo
   por clave, sin login de root.
@@ -431,7 +431,7 @@ modules/security.nix      2FA con TOTP (bloqueo, login, sudo, SSH) y tiempo de b
 tests/security.nix        test en VMs de todo lo de seguridad (nix build .#checks.x86_64-linux.security)
 tests/e2e-install.sh      instalación completa en una VM con TPM emulado, con los scripts reales
 hosts/vm/                 base del sistema (configuration.nix), disco (disko), VM
-home-manager/             escritorio, terminal, editor, herdr, cyber-shell, devenv
+home-manager/             escritorio, terminal, editor, cyber-shell, devenv
 work-os/cli/              CLI `work` y `work docs` (Notion/Slack)
 work-os/mcp/              servidor MCP de secretos
 work-os/scripts/          pendrive, instalación, post-instalación, mapeo de repos, migración

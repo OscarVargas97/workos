@@ -4,7 +4,7 @@ Un solo lugar para esto: work_docs.py (lectura) y sync_docs.py
 (escritura) tienen que coincidir en dónde vive cada archivo.
 
 ~/.local/share/company-context-docs/<empresa>/<concept_id>.md - mismo
-patrón que ~/.local/share/herdr-src/ (Fase de herdr): estado local de
+patrón de estado local de
 máquina, no config de usuario ni nada que viva en git. `vault/` se
 descartó a propósito: su propósito documentado es staging para migrar
 a un pendrive (Fase 4), no un cache de uso continuo - mezclar los dos

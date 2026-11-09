@@ -40,8 +40,8 @@ Uso: work <comando> [args]
                        URL usa `git clone`. Requiere la función de shell
                        `work`, igual que `enter`
   espacio <nombre>     crea el espacio <nombre> en $WORK_OS_ESPACIOS_DIR
-                        (default ~/Espacios), lo registra en herdr y lo
-                        abre: llama a `ws.py nuevo` de ia-workspace
+                        (default ~/Espacios) y lo registra en Orca:
+                        llama a `ws.py nuevo` de ia-workspace
                         (base en $WORK_OS_IA_WORKSPACE, default
                         ~/Repos/Externos/ia-workspace)
   status               info del proyecto actual: git, direnv
@@ -235,8 +235,8 @@ cmd_clone() {
   echo "$dest"
 }
 
-# Delega todo en `ws.py nuevo` de ia-workspace (crea, registra en herdr y
-# abre); acá solo se ubica la base y la carpeta destino.
+# Delega todo en `ws.py nuevo` de ia-workspace (crea el espacio y lo
+# registra en Orca); acá solo se ubica la base y la carpeta destino.
 cmd_espacio() {
   local name="${1:-}"
   [ -z "$name" ] && { echo "Uso: work espacio <nombre>" >&2; return 1; }
