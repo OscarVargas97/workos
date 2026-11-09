@@ -57,7 +57,7 @@ Layout local esperado por los scripts (carpetas hermanas):
 | `hosts/vm/disko-config.nix` | Disco: GPT, ESP 512M, LUKS `crypted` + ext4 | cambia el esquema de disco |
 | `hosts/vm/hardware-configuration.nix` | Perfil de VM QEMU | nunca para hardware real (eso va al privado) |
 | `home-manager/common.nix` | Entrada de Home Manager: paquetes de usuario, xdg, git, apps por defecto | |
-| `home-manager/{hyprland,zsh,kitty,neovim,devenv,herdr,cyber-shell}.nix` | Un módulo por área; `zsh.nix` empaqueta el CLI `work` | |
+| `home-manager/{hyprland,zsh,kitty,neovim,devenv,cyber-shell}.nix` | Un módulo por área; `zsh.nix` empaqueta el CLI `work` | |
 | `home-manager/services.nix` | Servicios de usuario: el guard `ExecCondition` que permite darlos de baja de forma persistente (Home Manager repone las unidades en cada switch, así que `systemctl --user disable` no alcanza) y el CLI `workos-services`. Un servicio entra al registro -y al panel del HUD- solo con usar ese `ExecCondition` | se agrega un servicio de usuario |
 | `home-manager/slk.nix` | slk (Slack TUI) como servicio dentro de un pty de `dtach`, para que notifique con la ventana cerrada; el comando `slk` se engancha a esa única instancia | |
 | `work-os/cli/work` | CLI `work` (bash): `enter`, `secret get`, `docs` | |
@@ -78,7 +78,7 @@ workos-private/flake.nix
        ├─ disko.nixosModules.disko
        ├─ hosts/vm/configuration.nix        (base común)
        ├─ modules/workos.nix                (opciones + usuario + home-manager.users.<name>)
-       │    └─ home-manager/common.nix → hyprland, zsh(+work CLI), kitty, neovim, devenv, herdr, cyber-shell
+       │    └─ home-manager/common.nix → hyprland, zsh(+work CLI), kitty, neovim, devenv, cyber-shell
        └─ módulos del privado               (valores de workos.*, hardware, extras)
 ```
 

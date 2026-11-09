@@ -10,7 +10,6 @@
     ./zsh.nix
     ./kitty.nix
     ./devenv.nix
-    ./herdr.nix
     ./yazi.nix
     ./services.nix
     ./slk.nix
@@ -154,7 +153,7 @@
     # no existe.
     dbeaver-bin
     # Cliente de base de datos de terminal (alternativa liviana a DBeaver
-    # para uso rápido desde kitty/herdr, sin abrir una app Java/Electron
+    # para uso rápido desde kitty, sin abrir una app Java/Electron
     # aparte) - conexiones en ~/.config/lazysql/config.toml, fuera de
     # este repo (dato de máquina, no de sistema).
     lazysql

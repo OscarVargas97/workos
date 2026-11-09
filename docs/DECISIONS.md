@@ -63,6 +63,9 @@ correspondiente en vez de lanzar un proceso efímero.
 `curl | sh`. Resuelto con releases pineadas por tag + hash
 (`home-manager/herdr.nix`, `fetchurl` de binarios musl estáticos).
 
+**Reemplazado (2026-11-09):** herdr sale del sistema; los worktrees, terminales
+y agentes se manejan desde la interfaz de Orca (OscarVargas97/workos#9).
+
 ## 6. Canal NixOS y actualización
 
 **Decisión:** canal estable (el vigente al instalar) + actualización
@@ -242,7 +245,7 @@ el repo privado con `workos.security.*`):
 | Disco | TPM2 **+ PIN** (post-install-setup.sh). Sin PIN, el desbloqueo automático por TPM2 es vulnerable a reemplazar la partición cifrada con acceso físico breve; con PIN no. PCR 7 (no 0+7) para no re-enrolar en cada actualización de BIOS. La passphrase de LUKS queda como recuperación (en Bitwarden). |
 | Bloqueo de pantalla, login de consola, pantalla de inicio | contraseña + código **"desbloqueo"** (`totp.enable`). Las tres a la vez: si solo el bloqueo pidiera código, se lo esquiva cambiando a una consola de texto. El secreto vive en el home (hyprlock corre como el usuario y no puede leer uno de root): protege contra quien tiene la laptop en la mano, no contra malware en la sesión. |
 | sudo, su, polkit (pkexec y diálogos gráficos de permisos) | contraseña + código **"sudo"**, secreto de root en `/var/lib/workos/totp/<usuario>` (`user=root`): un proceso del usuario no lo puede leer ni reemplazar. Código distinto del de desbloqueo. Las tres vías a root a la vez: si una quedara solo con contraseña, sería la forma de esquivar el código. |
-| SSH | solo clave desde `sshTotp.trustedNetworks`; clave + código "sudo" desde cualquier otra red (`sshTotp.enable`). Dentro de la red de confianza el TOTP rompería scripts, herdr y `pc`. La contraseña de Unix nunca sirve por SSH. Ojo: la red se reconoce por IP, y `192.168.1.0/24` también la usan muchos wifis públicos; ahí igual hace falta la clave privada. |
+| SSH | solo clave desde `sshTotp.trustedNetworks`; clave + código "sudo" desde cualquier otra red (`sshTotp.enable`). Dentro de la red de confianza el TOTP rompería scripts y `pc`. La contraseña de Unix nunca sirve por SSH. Ojo: la red se reconoce por IP, y `192.168.1.0/24` también la usan muchos wifis públicos; ahí igual hace falta la clave privada. |
 | Menú de arranque | sin editor de la línea del kernel (`systemd-boot.editor = false`): con acceso físico permitía agregar `init=/bin/sh` o similares. |
 | Códigos | un solo uso (`-d`), máx. 3 intentos cada 30 s (`-r 3 -R 30`, frena la fuerza bruta), ±30 s de desfase de reloj. |
 | vault | **cifrado con gocryptfs** (`work vault`, `work-os/scripts/vault.sh`): solo existe cifrado (`vault.enc`); se monta al abrirlo con la clave de Bitwarden (`workos-vault`). Solo viaja cifrado entre máquinas. gocryptfs y no age: cifra archivo por archivo, sirve para dumps de varios GB sin cargarlos en RAM. |

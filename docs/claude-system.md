@@ -43,18 +43,9 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
   `set -euo pipefail`; pineá todo lo externo (inputs de flake, `fetchurl`
   con hash).
 - **Nada destructivo sin confirmación explícita** (particionar, borrar
-  datos, `git push --force`, `herdr server stop` que cierra paneles).
+  datos, `git push --force`).
 - **Nada hardcodeado** (rutas de una persona, IPs, secretos). Usar
   `$HOME` y descubrir en runtime.
-- **Mantené el título de la pestaña de herdr al día.** Si `HERDR_ENV=1`, en
-  cuanto quede claro cuál es la tarea principal de la sesión (al empezarla
-  o al cambiar de tarea, no en cada turno si sigue siendo la misma) corré
-  `herdr tab rename "$HERDR_TAB_ID" "<resumen corto de la tarea>"` sin
-  anunciarlo (es housekeeping) — si el comando falla (socket caído),
-  ignorá y seguí. El resumen tiene que ser **corto, descriptivo y en
-  minúsculas** (2-3 palabras, máximo ~20 caracteres): un título largo
-  rompe la navegación por pestañas. Si `HERDR_ENV` no está seteado, no
-  corrés dentro de herdr: omitilo.
 
 ## Dónde está cada cosa
 
@@ -77,16 +68,8 @@ Antes de cambiar algo del sistema, leé `AGENTS.md` en ambos repos.
   CLI de Work OS. `work enter` hace `cd` y regenera el `CLAUDE.local.md`
   del proyecto con el contexto de su empresa (excluido de git; el
   `CLAUDE.md` del repo queda para las instrucciones versionadas).
-- `herdr`: multiplexor de terminales/agentes (probablemente estás corriendo
-  dentro de un panel de herdr). `claude`/`claudew`/`claudep` son alias de
-  zsh que fijan `CLAUDE_CONFIG_DIR` (perfil default/trabajo/personal); un
-  alias solo se expande en shell interactivo, así que si herdr necesita
-  re-arrancar el agente de una pestaña (por reinicio del server, etc.)
-  ejecuta el binario `claude` directo y pierde ese `CLAUDE_CONFIG_DIR`. Para
-  una pestaña que siempre debe usar el perfil de trabajo o personal, fijá
-  el env var al crear la pestaña en vez de confiar en el alias:
-  `herdr tab create --label "..." --env CLAUDE_CONFIG_DIR=$HOME/.claude-work`
-  (o `.claude-personal`) — así sobrevive a que herdr recupere la sesión.
+- `claude`/`claudew`/`claudep` son alias de zsh que fijan `CLAUDE_CONFIG_DIR`
+  (perfil default/trabajo/personal).
 - `ags request -i cyberpunk <pedido>`: habla con el HUD (menús, presets:
   `perf full|balanced|performance`, `apps-menu`, `toggle-hud`...).
 - `gh` para GitHub (git usa sus credenciales por https; verificá la
