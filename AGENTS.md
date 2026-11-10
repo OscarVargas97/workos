@@ -5,6 +5,8 @@ en este repo o que ayudan a una persona a instalar el sistema. La guía para
 humanos es [`README.md`](./README.md); este archivo no la repite, la
 estructura para ejecutarla.
 
+Project: [OscarVargas97/9](https://github.com/users/OscarVargas97/projects/9)
+
 **Antes de leer, analizar o modificar nada:** `git pull --ff-only` en este
 repo y en sus hermanos (`workos`, `workos-private`). Se edita desde varias
 máquinas y la copia local puede estar atrasada. Si el pull falla (cambios
@@ -26,6 +28,15 @@ que importa este como input `workos` y le pasa los datos personales.
 Layout local esperado por los scripts (carpetas hermanas):
 `<base>/workos`, `<base>/workos-private`, `<base>/iso/*.iso`, `<base>/vault/`
 (por defecto `<base>` = `~/Repos/Externos/workos`).
+
+## Cómo se trabaja
+
+Flujo de ia-qa sobre Orca; el espacio `workos` agrupa `workos`, `workos-personal` y `workos-template`.
+
+1. Todo cambio nace de un issue (solicitud con decisiones y criterios) y se rastrea en el Project de arriba (Status y Fase).
+2. Una tarea = un repo = un PR; rama `<tipo>/<n>-<slug>` desde la rama por defecto.
+3. Commits Conventional Commits con `Refs #n`, `CHANGELOG.md` al día y checks en verde (§5).
+4. PR con `Closes #n`, qué cambió y cómo se verificó. Fusiona la persona, nunca el agente; nada de `--force`, `--no-verify` ni push a `main`.
 
 ## 2. Invariantes (no romper nunca)
 
