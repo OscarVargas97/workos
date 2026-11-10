@@ -62,8 +62,7 @@ let
     fi
     log "listo"
   '';
-in
-{
+in {
   # $HOME/.local/bin en PATH (hermes queda publicado ahí) - declarado
   # acá a propósito: el instalador de Hermes busca esta misma línea en
   # ~/.zshrc/~/.zprofile antes de intentar agregarla él mismo, y como
@@ -83,7 +82,8 @@ in
   # trabajo pesado, después son chequeos baratos. `claude login` queda
   # a mano (OAuth por máquina).
   systemd.user.services.hermes-agent-bootstrap = {
-    Unit.Description = "Bootstrap de Hermes Agent (plugin de suscripción Claude)";
+    Unit.Description =
+      "Bootstrap de Hermes Agent (plugin de suscripción Claude)";
     Service = {
       Type = "oneshot";
       ExecCondition = workosServices.execCondition;

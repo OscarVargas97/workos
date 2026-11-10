@@ -18,7 +18,10 @@ let
   # código de desbloqueo en silencio - por eso enforce, después del setup.
   nullOk = !cfg.totp.enforce;
   rootSecret = {
-    googleAuthenticator = { enable = true; allowNullOTP = nullOk; };
+    googleAuthenticator = {
+      enable = true;
+      allowNullOTP = nullOk;
+    };
     rules.auth.google_authenticator.settings = {
       secret = "/var/lib/workos/totp/\${USER}";
       user = "root";
@@ -29,7 +32,10 @@ let
   # laptop en la mano, no contra malware en la sesión - por eso es un
   # código distinto del de sudo.
   userSecret = {
-    googleAuthenticator = { enable = true; allowNullOTP = nullOk; };
+    googleAuthenticator = {
+      enable = true;
+      allowNullOTP = nullOk;
+    };
   };
   # hyprlock tiene UN solo campo y responde con lo mismo a cada pregunta de
   # PAM (contraseña y código): nunca entraba. Con forward_pass se escribe
@@ -42,11 +48,12 @@ let
   };
 
   totpSetup = pkgs.writeShellScriptBin "workos-totp-setup" ''
-    export PATH=${lib.makeBinPath [ pkgs.google-authenticator pkgs.coreutils ]}:$PATH
+    export PATH=${
+      lib.makeBinPath [ pkgs.google-authenticator pkgs.coreutils ]
+    }:$PATH
     exec ${pkgs.bash}/bin/bash ${../work-os/scripts/totp-setup.sh} "$@"
   '';
-in
-{
+in {
   options.workos.security = {
     totp.enable = mkEnableOption ''
       código TOTP (app del teléfono) además de la contraseña en: bloqueo de
@@ -58,19 +65,22 @@ in
       DESPUÉS de correr workos-totp-setup: antes, te dejaría sin sudo'';
 
     sshTotp = {
-      enable = mkEnableOption "código TOTP (el de sudo) para SSH desde fuera de las redes de confianza";
+      enable = mkEnableOption
+        "código TOTP (el de sudo) para SSH desde fuera de las redes de confianza";
       trustedNetworks = mkOption {
         type = types.listOf types.str;
         default = [ ];
         example = [ "192.168.1.0/24" ];
-        description = "Redes (CIDR) desde las que SSH entra solo con clave, sin código.";
+        description =
+          "Redes (CIDR) desde las que SSH entra solo con clave, sin código.";
       };
     };
 
     lockTimeout = mkOption {
       type = types.ints.positive;
       default = 300;
-      description = "Segundos de inactividad hasta bloquear y apagar la pantalla (no suspende: sigue disponible por SSH).";
+      description =
+        "Segundos de inactividad hasta bloquear y apagar la pantalla (no suspende: sigue disponible por SSH).";
     };
   };
 
@@ -100,7 +110,8 @@ in
     (mkIf cfg.sshTotp.enable {
       assertions = [{
         assertion = cfg.totp.enable;
-        message = "workos.security.sshTotp necesita workos.security.totp.enable (usa el mismo secreto de sudo).";
+        message =
+          "workos.security.sshTotp necesita workos.security.totp.enable (usa el mismo secreto de sudo).";
       }];
       # Dentro de las redes de confianza, solo clave; desde cualquier otra,
       # clave + código. La contraseña de Unix no se pide nunca por SSH.
@@ -109,7 +120,9 @@ in
         AuthenticationMethods = "publickey";
       };
       services.openssh.extraConfig = ''
-        Match Address *${concatMapStringsSep "" (n: ",!${n}") cfg.sshTotp.trustedNetworks}
+        Match Address *${
+          concatMapStringsSep "" (n: ",!${n}") cfg.sshTotp.trustedNetworks
+        }
           AuthenticationMethods publickey,keyboard-interactive:pam
       '';
       # En SSH la clave ya es el primer factor: PAM solo tiene que validar

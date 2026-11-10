@@ -12,39 +12,58 @@
 #   - ataques: su/pkexec sin código, reusar un código, fuerza bruta, cruzar
 #     códigos, SSH con contraseña, borrar el secreto (nullok vs enforce),
 #     TPM2 sin PIN, nombres visibles en el vault.
-{ pkgs, self }:
+{ pkgs, ... }:
 let
   keys = import "${pkgs.path}/nixos/tests/ssh-keys.nix" pkgs;
   vault = pkgs.writeShellScriptBin "workos-vault" ''
-    export PATH=${pkgs.lib.makeBinPath [ pkgs.gocryptfs pkgs.rsync pkgs.util-linux pkgs.git pkgs.diffutils pkgs.findutils ]}:$PATH
+    export PATH=${
+      pkgs.lib.makeBinPath [
+        pkgs.gocryptfs
+        pkgs.rsync
+        pkgs.util-linux
+        pkgs.git
+        pkgs.diffutils
+        pkgs.findutils
+      ]
+    }:$PATH
     exec ${pkgs.bash}/bin/bash ${../work-os/scripts}/vault.sh "$@"
   '';
   client = {
     virtualisation.vlans = [ 1 ];
     environment.systemPackages = [ pkgs.sshpass ];
   };
-in
-pkgs.testers.runNixOSTest {
+in pkgs.testers.runNixOSTest {
   name = "workos-security";
   nodes = {
     lan = client; # 192.168.1.1: red de confianza
-    wan = client // { virtualisation.vlans = [ 2 ]; }; # afuera (red 192.168.2.0/24)
+    wan = client // {
+      virtualisation.vlans = [ 2 ];
+    }; # afuera (red 192.168.2.0/24)
     machine = { ... }: {
       imports = [ ../modules/security.nix ];
       virtualisation.vlans = [ 1 2 ]; # 192.168.1.2 y 192.168.2.2
       virtualisation.tpm.enable = true;
       workos.security = {
         totp.enable = true;
-        sshTotp = { enable = true; trustedNetworks = [ "192.168.1.0/24" ]; };
+        sshTotp = {
+          enable = true;
+          trustedNetworks = [ "192.168.1.0/24" ];
+        };
       };
-      services.openssh = { enable = true; settings.PasswordAuthentication = false; };
+      services.openssh = {
+        enable = true;
+        settings.PasswordAuthentication = false;
+      };
       users.users.alice = {
         isNormalUser = true;
         password = "pw";
         extraGroups = [ "wheel" ];
         openssh.authorizedKeys.keys = [ keys.snakeOilPublicKey ];
       };
-      users.users.bob = { isNormalUser = true; password = "bob"; }; # para probar su desde otro usuario
+      users.users.bob = {
+        isNormalUser = true;
+        password = "bob";
+      }; # para probar su desde otro usuario
       # su/sudo reales en una pty: expect corre como el usuario (sin su anidado,
       # que colgaba el test) y responde contraseña y código.
       environment.etc."workos-test/pty.exp".text = ''
@@ -61,13 +80,27 @@ pkgs.testers.runNixOSTest {
         catch wait r
         exit [lindex $r 3]
       '';
-      environment.systemPackages = with pkgs; [ oath-toolkit pamtester google-authenticator cryptsetup vault expect git ];
+      environment.systemPackages = with pkgs; [
+        oath-toolkit
+        pamtester
+        google-authenticator
+        cryptsetup
+        vault
+        expect
+        git
+      ];
     };
     # totp.enforce: sin nullok, que falte el secreto no abre nada.
     strict = { ... }: {
       imports = [ ../modules/security.nix ];
-      workos.security.totp = { enable = true; enforce = true; };
-      users.users.alice = { isNormalUser = true; password = "pw"; };
+      workos.security.totp = {
+        enable = true;
+        enforce = true;
+      };
+      users.users.alice = {
+        isNormalUser = true;
+        password = "pw";
+      };
       environment.systemPackages = [ pkgs.pamtester ];
     };
   };

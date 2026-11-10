@@ -1,8 +1,7 @@
 # Entorno genérico — Fase 2, para cualquier persona de la empresa que use
 # este repo. Nada de identidad acá (usuario, email, clave SSH); eso vive
 # en modules/workos.nix (valores en el repo privado), que importa este archivo.
-{ config, pkgs, ... }:
-{
+{ config, pkgs, ... }: {
   imports = [
     ./hyprland.nix
     ./neovim.nix
@@ -28,7 +27,8 @@
   # más genérico, mismo formato que genera "gh auth setup-git" cuando
   # sí puede escribir.
   programs.git.extraConfig = {
-    credential."https://github.com".helper = [ "" "!${pkgs.gh}/bin/gh auth git-credential" ];
+    credential."https://github.com".helper =
+      [ "" "!${pkgs.gh}/bin/gh auth git-credential" ];
   };
 
   # nvim ya es el IDE completo (Fase 2) - lo mismo para $EDITOR/$VISUAL
@@ -113,7 +113,9 @@
     # Barra de estado de Claude Code (badge de ponytail + skill activa); la
     # activa "statusLine" en ~/.claude/settings.json.
     (writeShellScriptBin "claude-statusline" ''
-      PATH=${lib.makeBinPath [ jq ]}:$PATH exec ${bash}/bin/bash ${../work-os/scripts/claude-statusline.sh} "$@"
+      PATH=${lib.makeBinPath [ jq ]}:$PATH exec ${bash}/bin/bash ${
+        ../work-os/scripts/claude-statusline.sh
+      } "$@"
     '')
     kubectl
     brave
@@ -212,5 +214,6 @@
   # edita en docs/claude-system.md, no en ~/.claude (es un symlink de solo
   # lectura al store). "text" y no "source" a propósito: es de tipo lines,
   # así el repo privado puede sumarle lo suyo con lib.mkAfter.
-  home.file.".claude/CLAUDE.md".text = builtins.readFile ../docs/claude-system.md;
+  home.file.".claude/CLAUDE.md".text =
+    builtins.readFile ../docs/claude-system.md;
 }

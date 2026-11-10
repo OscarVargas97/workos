@@ -2,19 +2,14 @@
 # trabajo (Python/Django, TS/JS, Nix). Deliberadamente sin nvim-cmp: Neovim
 # 0.11+ trae completado LSP nativo (vim.lsp.completion), evita una
 # dependencia más para algo que el editor ya resuelve solo.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs.neovim = {
     enable = true;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
 
-    extraPackages = with pkgs; [
-      pyright
-      typescript-language-server
-      nixd
-    ];
+    extraPackages = with pkgs; [ pyright typescript-language-server nixd ];
 
     plugins = with pkgs.vimPlugins; [
       nvim-treesitter.withAllGrammars

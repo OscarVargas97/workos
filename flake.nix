@@ -1,5 +1,6 @@
 {
-  description = "workos — Work OS base: NixOS + Home Manager + CLI de agentes, sin datos personales";
+  description =
+    "workos — Work OS base: NixOS + Home Manager + CLI de agentes, sin datos personales";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -35,55 +36,59 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, disko, ags, cyberShell, ... }: {
-    # Arma un host completo. Todo lo que es de una persona/empresa/máquina
-    # (identidad, hardware, disco, extras) llega en `modules` desde el
-    # repo privado de quien lo usa - este repo no conoce a nadie.
-    lib.mkHost = modules: nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = { inherit ags cyberShell; };
-      modules = [
-        disko.nixosModules.disko
-        ./hosts/vm/configuration.nix
-        ./modules/workos.nix
-        ./modules/security.nix
-        home-manager.nixosModules.home-manager
-        {
-          # Overlay puntual: solo claude-code viene de nixpkgs-unstable
-          # (ver comentario del input, arriba). El resto de los paquetes
-          # sigue resolviendo contra nixos-26.05.
-          nixpkgs.overlays = [
-            (final: prev: {
-              # allowUnfree propio: legacyPackages evalúa con su config por
-              # defecto (unfree bloqueado), sin heredar el allowUnfree = true
-              # de hosts/vm/configuration.nix (ese solo aplica a la instancia
-              # principal de nixpkgs).
-              claude-code = (import nixpkgs-unstable {
-                inherit (prev) system;
-                config.allowUnfree = true;
-              }).claude-code;
-            })
-          ];
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = { inherit ags cyberShell; };
-        }
-      ] ++ modules;
-    };
+  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, disko, ags
+    , cyberShell, ... }: {
+      # Arma un host completo. Todo lo que es de una persona/empresa/máquina
+      # (identidad, hardware, disco, extras) llega en `modules` desde el
+      # repo privado de quien lo usa - este repo no conoce a nadie.
+      lib.mkHost = modules:
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit ags cyberShell; };
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/vm/configuration.nix
+            ./modules/workos.nix
+            ./modules/security.nix
+            home-manager.nixosModules.home-manager
+            {
+              # Overlay puntual: solo claude-code viene de nixpkgs-unstable
+              # (ver comentario del input, arriba). El resto de los paquetes
+              # sigue resolviendo contra nixos-26.05.
+              nixpkgs.overlays = [
+                (_final: prev: {
+                  # allowUnfree propio: legacyPackages evalúa con su config por
+                  # defecto (unfree bloqueado), sin heredar el allowUnfree = true
+                  # de hosts/vm/configuration.nix (ese solo aplica a la instancia
+                  # principal de nixpkgs).
+                  inherit ((import nixpkgs-unstable {
+                    inherit (prev) system;
+                    config.allowUnfree = true;
+                  }))
+                    claude-code;
+                })
+              ];
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = { inherit ags cyberShell; };
+            }
+          ] ++ modules;
+        };
 
-    # Disco LUKS+ext4 por defecto (/dev/vda; otro host lo pisa con
-    # disko.devices.disk.main.device).
-    nixosModules.disko-default = ./hosts/vm/disko-config.nix;
-    # Tests en VMs (necesitan KVM): nix flake check, o
-    # nix build .#checks.x86_64-linux.security -L
-    checks.x86_64-linux.security = import ./tests/security.nix {
-      pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      inherit self;
-    };
+      # Disco LUKS+ext4 por defecto (/dev/vda; otro host lo pisa con
+      # disko.devices.disk.main.device).
+      nixosModules.disko-default = ./hosts/vm/disko-config.nix;
+      # Tests en VMs (necesitan KVM): nix flake check, o
+      # nix build .#checks.x86_64-linux.security -L
+      checks.x86_64-linux.security = import ./tests/security.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        inherit self;
+      };
 
-    # Host de prueba: VM de QEMU/Boxes con el disco por defecto.
-    nixosModules.vm = {
-      imports = [ ./hosts/vm/disko-config.nix ./hosts/vm/hardware-configuration.nix ];
+      # Host de prueba: VM de QEMU/Boxes con el disco por defecto.
+      nixosModules.vm = {
+        imports =
+          [ ./hosts/vm/disko-config.nix ./hosts/vm/hardware-configuration.nix ];
+      };
     };
-  };
 }

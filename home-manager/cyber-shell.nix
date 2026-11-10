@@ -19,13 +19,15 @@ let
     # desarrollo con el mismo entorno, sin rebuild.
     exec ${agsPkgs.default}/bin/ags run --gtk 3 "''${CYBER_SHELL_DIR:-${cyberShell}}/core.ts"
   '';
-in
-{
+in {
   home.packages = [
     cyberShellBin
     agsPkgs.default # `ags` en el PATH - lo usan los binds de hyprland.nix (perf full/balanced/performance)
     pkgs.sassc # compila components/style/cyber.scss -> cyber.css
-    (pkgs.python3.withPackages (ps: [ ps.pillow ])) # scripts/gen-map.py (minimapa del sidepanel) necesita Pillow
+    (pkgs.python3.withPackages (ps:
+      [
+        ps.pillow
+      ])) # scripts/gen-map.py (minimapa del sidepanel) necesita Pillow
     pkgs.wirelesstools # iwgetid - SSID de wifi para el widget de red del sidepanel
     pkgs.nerd-fonts.symbols-only # ICONF = "Symbols Nerd Font" en fonts.ts
     # cmodal.ts (modal de audio: lista de dispositivos, cambio de sink/
@@ -39,5 +41,6 @@ in
 
   # Fuentes propias del theme, si no los iconos/logos del HUD caen a un
   # font sin esos glifos (se ven como cuadros/tofu).
-  home.file.".local/share/fonts/cyberarch".source = "${cyberShell}/assets/fonts";
+  home.file.".local/share/fonts/cyberarch".source =
+    "${cyberShell}/assets/fonts";
 }

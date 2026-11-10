@@ -10,7 +10,8 @@ let
   # nixos-config. Un `$HOME/workos/nixos-config/...` hardcodeado
   # funciona en la máquina de desarrollo pero no en la instalada - bug
   # real encontrado probando en la VM real, no supuesto).
-  work-cli = pkgs.writeShellScriptBin "work-cli" (builtins.readFile ../work-os/cli/work);
+  work-cli =
+    pkgs.writeShellScriptBin "work-cli" (builtins.readFile ../work-os/cli/work);
 
   # work-os/cli/docs/ (Fase 9/11) - los .py se importan entre sí
   # (work_docs.py y sync_docs.py hacen `import notion_adapter`, y ambos
@@ -37,11 +38,21 @@ let
   # `work vault ...` (DECISIONS.md #15). PATH se antepone, no se reemplaza:
   # fusermount tiene que seguir saliendo de /run/wrappers (setuid).
   workos-vault = pkgs.writeShellScriptBin "workos-vault" ''
-    export PATH=${pkgs.lib.makeBinPath [ pkgs.gocryptfs pkgs.rsync pkgs.util-linux pkgs.rbw pkgs.git pkgs.diffutils pkgs.findutils pkgs.localsend ]}:$PATH
+    export PATH=${
+      pkgs.lib.makeBinPath [
+        pkgs.gocryptfs
+        pkgs.rsync
+        pkgs.util-linux
+        pkgs.rbw
+        pkgs.git
+        pkgs.diffutils
+        pkgs.findutils
+        pkgs.localsend
+      ]
+    }:$PATH
     exec ${pkgs.bash}/bin/bash ${../work-os/scripts}/vault.sh "$@"
   '';
-in
-{
+in {
   programs.zsh = {
     enable = true;
     # Los de Fedora (/usr/share/zsh-syntax-highlighting, etc) son

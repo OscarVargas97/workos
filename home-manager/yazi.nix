@@ -2,8 +2,7 @@
 # función `y` (wrapper estándar de yazi): al salir, cd a la carpeta en la
 # que quedó parado - sin esto, salir de yazi te devuelve a la carpeta
 # donde lo lanzaste, no a donde navegaste.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;

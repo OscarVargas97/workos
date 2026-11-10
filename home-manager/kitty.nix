@@ -4,8 +4,7 @@
 # del sistema, y calza con el wallpaper). Transparencia via
 # background_opacity — el blur lo pone Hyprland (decoration.blur en
 # hyprland.nix, aplica a todas las ventanas, no hace falta duplicar acá.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   programs.kitty = {
     enable = true;
     font = {
@@ -59,14 +58,22 @@
       mark2_background = "#ff2bd6";
       mark3_foreground = "#0a0e14";
       mark3_background = "#5ca0ff";
-      color0 = "#0a0e14"; color8 = "#3a3f4b";
-      color1 = "#ff2b4d"; color9 = "#ff5c72";
-      color2 = "#00ff9f"; color10 = "#5cffc4";
-      color3 = "#ffcc00"; color11 = "#ffe066";
-      color4 = "#2b7fff"; color12 = "#5ca0ff";
-      color5 = "#ff2bd6"; color13 = "#ff6be8";
-      color6 = "#00fff9"; color14 = "#6bfff9";
-      color7 = "#c5d1de"; color15 = "#e8f0f7";
+      color0 = "#0a0e14";
+      color8 = "#3a3f4b";
+      color1 = "#ff2b4d";
+      color9 = "#ff5c72";
+      color2 = "#00ff9f";
+      color10 = "#5cffc4";
+      color3 = "#ffcc00";
+      color11 = "#ffe066";
+      color4 = "#2b7fff";
+      color12 = "#5ca0ff";
+      color5 = "#ff2bd6";
+      color13 = "#ff6be8";
+      color6 = "#00fff9";
+      color14 = "#6bfff9";
+      color7 = "#c5d1de";
+      color15 = "#e8f0f7";
     };
     keybindings = {
       "ctrl+left" = "neighboring_window left";

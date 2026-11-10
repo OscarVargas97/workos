@@ -2,8 +2,7 @@
 # Fedora original NO van acá (ver Fase 2b/zsh.nix) - entran como
 # runtimes por-proyecto vía devenv/direnv, para no contaminar el
 # sistema global con versiones de Node/Python fijas para siempre.
-{ pkgs, ... }:
-{
+{ pkgs, ... }: {
   # nix-direnv: cachea los shells de devenv/nix en el store en vez de
   # reconstruirlos cada vez que se entra a la carpeta - sin esto, cada
   # "cd" a un proyecto con devenv sería lento. El hook de zsh (cargar/
