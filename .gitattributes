@@ -1,2 +1,5 @@
 * text=auto eol=lf
 *.png binary
+CHANGELOG.md merge=union
+*.sh text eol=lf
+.githooks/* text eol=lf

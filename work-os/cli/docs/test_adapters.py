@@ -7,19 +7,20 @@ real de las APIs de Notion/Slack (no pega a la red) - ver
 DECISIONS.md #13 y la costumbre de esta sesión de probar de verdad, no
 asumir. Correr: uv run work-os/cli/docs/test_adapters.py
 """
+
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import notion_adapter  # noqa: E402
-import slack_adapter  # noqa: E402
+import notion_adapter
+import slack_adapter
 
 checks = 0
 failures = 0
 
 
 def check(label: str, got, expected):
-    global checks, failures
+    global checks, failures  # noqa: PLW0603
     checks += 1
     if got != expected:
         failures += 1
@@ -36,7 +37,10 @@ NOTION_RESPONSE = {
         {"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"plain_text": "Item 1"}]}},
         {"type": "to_do", "to_do": {"rich_text": [{"plain_text": "Tarea"}], "checked": True}},
         {"type": "paragraph", "paragraph": {"rich_text": []}},  # bloque vacío, debe ignorarse
-        {"type": "image", "image": {"type": "external", "external": {"url": "https://x"}}},  # sin rich_text, debe ignorarse
+        {
+            "type": "image",
+            "image": {"type": "external", "external": {"url": "https://x"}},
+        },  # sin rich_text, debe ignorarse
     ]
 }
 

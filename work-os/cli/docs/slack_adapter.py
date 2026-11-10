@@ -8,9 +8,10 @@ Cada mensaje se devuelve marcado `confidence: unverified` (DECISIONS.md
 #4 de docs/DECISIONS.md, SCHEMA.md sección 4 de company-context): una
 conversación de Slack nunca es una regla vigente por sí sola.
 """
+
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 SLACK_API = "https://slack.com/api"
 
@@ -25,7 +26,9 @@ def _default_http_get(url: str, headers: dict, params: dict) -> dict:
     return resp.json()
 
 
-def fetch_recent_messages(channel_id: str, token: str, limit: int = 20, http_get: HttpGet = _default_http_get) -> list[dict]:
+def fetch_recent_messages(
+    channel_id: str, token: str, limit: int = 20, http_get: HttpGet = _default_http_get
+) -> list[dict]:
     """Trae los últimos `limit` mensajes de un canal, en vivo (nivel 1, sin sync)."""
     headers = {"Authorization": f"Bearer {token}"}
     data = http_get(f"{SLACK_API}/conversations.history", headers, {"channel": channel_id, "limit": limit})

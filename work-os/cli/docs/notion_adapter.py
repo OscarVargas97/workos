@@ -8,9 +8,10 @@ tocar work_docs.py.
 `http_get` es inyectable para poder testear sin pegarle a la API real
 de Notion (ver work-os/cli/docs/test_adapters.py).
 """
+
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 NOTION_API = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
@@ -29,7 +30,7 @@ def _default_http_get(url: str, headers: dict) -> dict:
 # ponytail: cubre los tipos de bloque más comunes (párrafo, headings,
 # listas, to-do, quote) - un tipo no cubierto cae al fallback genérico
 # en vez de fallar. Ampliar acá si Fase 10 se topa con uno que falte.
-def _block_to_text(block: dict) -> Optional[str]:
+def _block_to_text(block: dict) -> str | None:
     btype = block.get("type")
     data = block.get(btype, {})
     rich_text = data.get("rich_text")

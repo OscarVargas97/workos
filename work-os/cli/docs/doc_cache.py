@@ -10,6 +10,7 @@ descartó a propósito: su propósito documentado es staging para migrar
 a un pendrive (Fase 4), no un cache de uso continuo - mezclar los dos
 props en la misma carpeta hubiera confundido de qué se trata cada cosa.
 """
+
 from pathlib import Path
 
 

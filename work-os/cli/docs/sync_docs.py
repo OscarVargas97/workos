@@ -17,6 +17,7 @@ sincronizó nada para ese concept_id.
 Pensado para correr disparado por un servicio de systemd --user al
 iniciar sesión, o a mano cuando se quiera forzar un refresh.
 """
+
 import os
 import subprocess
 import sys
@@ -25,9 +26,9 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import notion_adapter  # noqa: E402
-import slack_adapter  # noqa: E402
-from doc_cache import cache_path  # noqa: E402
+import notion_adapter
+import slack_adapter
+from doc_cache import cache_path
 
 SKILL = "work-docs"
 COMPANIES_FILE = Path(
@@ -38,7 +39,9 @@ COMPANIES_FILE = Path(
 def get_secret(name: str) -> str | None:
     result = subprocess.run(
         ["work-cli", "secret", "get", name, "--skill", SKILL],
-        capture_output=True, text=True, timeout=15,
+        capture_output=True,
+        text=True,
+        timeout=15,
     )
     if result.returncode != 0:
         return None
@@ -58,7 +61,7 @@ def load_companies() -> dict[str, Path]:
     if not COMPANIES_FILE.exists():
         return companies
     for line in COMPANIES_FILE.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if not line or line.startswith("#") or "=" not in line:
             continue
         name, path = line.split("=", 1)
@@ -76,7 +79,10 @@ def sync_company(company: str, context_path: Path) -> tuple[int, int]:
     if notion_map:
         notion_token = get_secret(f"notion-token-{company}")
         if notion_token is None:
-            print(f"  [{company}] saltando Notion: sin permiso/token para notion-token-{company}", file=sys.stderr)
+            print(
+                f"  [{company}] saltando Notion: sin permiso/token para notion-token-{company}",
+                file=sys.stderr,
+            )
 
     for concept_id, page_id in notion_map.items():
         if notion_token is None:
@@ -97,7 +103,9 @@ def sync_company(company: str, context_path: Path) -> tuple[int, int]:
     if slack_map:
         slack_token = get_secret(f"slack-token-{company}")
         if slack_token is None:
-            print(f"  [{company}] saltando Slack: sin permiso/token para slack-token-{company}", file=sys.stderr)
+            print(
+                f"  [{company}] saltando Slack: sin permiso/token para slack-token-{company}", file=sys.stderr
+            )
 
     for concept_id, channel_id in slack_map.items():
         if slack_token is None:
