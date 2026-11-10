@@ -1,6 +1,6 @@
 # `pc`: muestra en esta máquina, a pantalla completa, el monitor de otro
-# PC que transmite con Sunshine (Moonlight como cliente). Solo video: el
-# audio sigue sonando en el PC remoto (--audio-on-host). Se activa con
+# PC que transmite con Sunshine (Moonlight como cliente), con su audio
+# sonando acá (antes --audio-on-host lo dejaba en el PC remoto). Se activa con
 # workos.pc.enable (modules/workos.nix); las reglas de ventana de
 # Moonlight están en hyprland.nix.
 { pkgs, osConfig, ... }:
@@ -43,7 +43,7 @@
       res=''${PC_RES:-${if osConfig.workos.pc.resolution != null then osConfig.workos.pc.resolution else "\${mon% *}"}}; fps=''${PC_FPS:-''${mon#* }}
       [[ $res =~ ^[0-9]+x[0-9]+$ ]] || res=1920x1080
       [[ $fps =~ ^[0-9]+$ ]] || fps=60
-      setsid -f $ml stream "$host" Desktop --resolution "$res" --fps "$fps" --display-mode fullscreen --audio-on-host >/dev/null 2>&1
+      setsid -f $ml stream "$host" Desktop --resolution "$res" --fps "$fps" --display-mode fullscreen >/dev/null 2>&1
     '')
   ];
 }
