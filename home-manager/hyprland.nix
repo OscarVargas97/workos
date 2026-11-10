@@ -60,8 +60,7 @@ let
       done
     fi
   '';
-in
-{
+in {
   wayland.windowManager.hyprland = {
     enable = true;
     # Hyprland 0.55+ pasó a Lua como formato nuevo, y el módulo de
@@ -140,136 +139,156 @@ in
       # y viaja con el bind en hyprctl binds -j -> shortcuts.ts la lee de
       # ahí para categorizar el panel (Mod+K), sin mantener una lista
       # separada que se pueda desincronizar de estos binds.
-      bindd =
-        [
-          "$mod, RETURN, Aplicaciones: Abrir terminal, exec, $terminal"
-          # --hold deja la ventana abierta al terminar, para ver si falló
-          "$mod CTRL, R, Sistema: Rebuild de NixOS, exec, $terminal --hold rebuild"
-          "$mod, M, Ventanas: Ocultar/mostrar todas las ventanas, exec, ocultar-ventanas"
-          "$mod, D, Aplicaciones: Abrir launcher, exec, $launcher"
-          "$mod, V, Aplicaciones: Historial de portapapeles, exec, cliphist list | wofi --dmenu | cliphist decode | wl-copy"
-          "$mod, Q, Ventanas: Cerrar ventana activa, killactive"
-          # Invertido a pedido explícito: $mod+Q (cerrar ventana) se aprieta
-          # tan seguido que $mod SHIFT+Q (un solo shift de distancia) volaba
-          # sesiones enteras sin querer. Ahora el vecino de Q bloquea (acción
-          # reversible) y salir de sesión se movió a L, mucho menos usado.
-          "$mod SHIFT, Q, Sistema: Bloquear pantalla, exec, hyprlock"
-          "$mod, L, Sistema: Salir de Hyprland, exit"
-          ", Print, Capturas: Captura de región (al portapapeles), exec, grim -g \"$(slurp)\" - | wl-copy"
-          "$mod, Print, Capturas: Captura de región (a archivo), exec, grim -g \"$(slurp)\" \"$HOME/Imagenes/captura-$(date +%Y%m%d-%H%M%S).png\""
-          "$mod, B, Aplicaciones: Abrir Brave, exec, brave"
-          "ALT, SPACE, Aplicaciones: Cambiar layout de teclado (us/latam), exec, kb-layout-toggle"
+      bindd = [
+        "$mod, RETURN, Aplicaciones: Abrir terminal, exec, $terminal"
+        # --hold deja la ventana abierta al terminar, para ver si falló
+        "$mod CTRL, R, Sistema: Rebuild de NixOS, exec, $terminal --hold rebuild"
+        "$mod, M, Ventanas: Ocultar/mostrar todas las ventanas, exec, ocultar-ventanas"
+        "$mod, D, Aplicaciones: Abrir launcher, exec, $launcher"
+        "$mod, V, Aplicaciones: Historial de portapapeles, exec, cliphist list | wofi --dmenu | cliphist decode | wl-copy"
+        "$mod, Q, Ventanas: Cerrar ventana activa, killactive"
+        # Invertido a pedido explícito: $mod+Q (cerrar ventana) se aprieta
+        # tan seguido que $mod SHIFT+Q (un solo shift de distancia) volaba
+        # sesiones enteras sin querer. Ahora el vecino de Q bloquea (acción
+        # reversible) y salir de sesión se movió a L, mucho menos usado.
+        "$mod SHIFT, Q, Sistema: Bloquear pantalla, exec, hyprlock"
+        "$mod, L, Sistema: Salir de Hyprland, exit"
+        ''
+          , Print, Capturas: Captura de región (al portapapeles), exec, grim -g "$(slurp)" - | wl-copy''
+        ''
+          $mod, Print, Capturas: Captura de región (a archivo), exec, grim -g "$(slurp)" "$HOME/Imagenes/captura-$(date +%Y%m%d-%H%M%S).png"''
+        "$mod, B, Aplicaciones: Abrir Brave, exec, brave"
+        "ALT, SPACE, Aplicaciones: Cambiar layout de teclado (us/latam), exec, kb-layout-toggle"
 
-          # Todo lo que habla con el HUD (ags request -i cyberpunk) usa
-          # siempre $mod SHIFT + letra, sin excepción - pedido explícito de
-          # consistencia. Antes se mezclaba $mod solo para "acciones
-          # directas" (notif, updates, perf, shortcuts, apps-menu) con
-          # $mod SHIFT para "modales" (volumen, wifi...), y esa mezcla
-          # generó un bug real: un bind terminó necesitando
-          # SUPER+CTRL+Q porque Q y SHIFT+Q ya estaban tomados, pero el HUD
-          # seguía dibujando solo "Q" - confuso y roto. $mod solo queda
-          # reservado para gestión de ventanas y lanzar apps (arriba);
-          # $mod SHIFT+letra que abajo NO dice "HUD:" en la descripción es
-          # gestión nativa de ventanas (fullscreen, forzar cierre, mover
-          # ventana), no pasa por cyber-shell.
-          #
-          # El popup de notificaciones (notifpopup.ts en cyber-shell) dibuja
-          # sus teclas leyéndolas en vivo de `hyprctl binds -j` (ver
-          # keymap.ts ahí) - cambiar la letra acá abajo alcanza, nunca más
-          # hace falta tocar cyber-shell para que el dibujo coincida con el
-          # bind real. El aviso de AUR/Arch de más abajo (G/J) NO usa este
-          # mecanismo: reemplazado por un panel de drift de forks/
-          # herramientas (updates.ts) que no dibuja keycaps, solo se abre y
-          # cierra - no aplica acá.
-          "$mod SHIFT, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
-          "$mod SHIFT, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
-          # G (no U): U ya es "modal aiusage" más abajo. El panel lista
-          # drift de forks (vs su upstream real) y de herramientas del
-          # sistema (inputs de flake.lock vs su origen) - ver
-          # cyber-shell/components/modules/updates.ts.
-          "$mod SHIFT, G, HUD: Abrir panel de actualizaciones (forks/herramientas), exec, ags request -i cyberpunk updates-toggle"
-          "$mod SHIFT, J, HUD: Cerrar panel/aviso de actualizaciones, exec, ags request -i cyberpunk updates-dismiss"
-          # D de "daemons": qué corre en segundo plano (slk, syncs de
-          # login), con arranque/detención y baja persistente desde el
-          # mismo panel - ver cyber-shell/components/modules/services.ts y
-          # services.nix (el registro sale de systemd, no de una lista).
-          "$mod SHIFT, D, HUD: Abrir panel de servicios de fondo, exec, ags request -i cyberpunk services-toggle"
-          # 3 planes de animaciones/blur del HUD (pedido explícito: nunca
-          # apagar animWheel, el menu de apps - baja el resto + el blur
-          # de Hyprland, ver applyPerfPreset en cyber-shell/config.ts).
-          "$mod SHIFT, F1, HUD: Plan de rendimiento FULL, exec, ags request -i cyberpunk 'perf full'"
-          "$mod SHIFT, F2, HUD: Plan de rendimiento BALANCED, exec, ags request -i cyberpunk 'perf balanced'"
-          "$mod SHIFT, F3, HUD: Plan de rendimiento PERFORMANCE, exec, ags request -i cyberpunk 'perf performance'"
-          # Panel con todos los binds de Hyprland (lee hyprctl binds -j en
-          # vivo, ver shortcuts.ts) - mientras se aprende Wayland. S (no K):
-          # K ya es "forzar cierre" en gestión de ventanas, más abajo.
-          "$mod SHIFT, S, HUD: Abrir/cerrar panel de shortcuts, exec, ags request -i cyberpunk shortcuts"
+        # Todo lo que habla con el HUD (ags request -i cyberpunk) usa
+        # siempre $mod SHIFT + letra, sin excepción - pedido explícito de
+        # consistencia. Antes se mezclaba $mod solo para "acciones
+        # directas" (notif, updates, perf, shortcuts, apps-menu) con
+        # $mod SHIFT para "modales" (volumen, wifi...), y esa mezcla
+        # generó un bug real: un bind terminó necesitando
+        # SUPER+CTRL+Q porque Q y SHIFT+Q ya estaban tomados, pero el HUD
+        # seguía dibujando solo "Q" - confuso y roto. $mod solo queda
+        # reservado para gestión de ventanas y lanzar apps (arriba);
+        # $mod SHIFT+letra que abajo NO dice "HUD:" en la descripción es
+        # gestión nativa de ventanas (fullscreen, forzar cierre, mover
+        # ventana), no pasa por cyber-shell.
+        #
+        # El popup de notificaciones (notifpopup.ts en cyber-shell) dibuja
+        # sus teclas leyéndolas en vivo de `hyprctl binds -j` (ver
+        # keymap.ts ahí) - cambiar la letra acá abajo alcanza, nunca más
+        # hace falta tocar cyber-shell para que el dibujo coincida con el
+        # bind real. El aviso de AUR/Arch de más abajo (G/J) NO usa este
+        # mecanismo: reemplazado por un panel de drift de forks/
+        # herramientas (updates.ts) que no dibuja keycaps, solo se abre y
+        # cierra - no aplica acá.
+        "$mod SHIFT, X, HUD: Descartar notificación actual, exec, ags request -i cyberpunk notif-dismiss"
+        "$mod SHIFT, E, HUD: Leer notificación actual, exec, ags request -i cyberpunk notif-read"
+        # G (no U): U ya es "modal aiusage" más abajo. El panel lista
+        # drift de forks (vs su upstream real) y de herramientas del
+        # sistema (inputs de flake.lock vs su origen) - ver
+        # cyber-shell/components/modules/updates.ts.
+        "$mod SHIFT, G, HUD: Abrir panel de actualizaciones (forks/herramientas), exec, ags request -i cyberpunk updates-toggle"
+        "$mod SHIFT, J, HUD: Cerrar panel/aviso de actualizaciones, exec, ags request -i cyberpunk updates-dismiss"
+        # D de "daemons": qué corre en segundo plano (slk, syncs de
+        # login), con arranque/detención y baja persistente desde el
+        # mismo panel - ver cyber-shell/components/modules/services.ts y
+        # services.nix (el registro sale de systemd, no de una lista).
+        "$mod SHIFT, D, HUD: Abrir panel de servicios de fondo, exec, ags request -i cyberpunk services-toggle"
+        # 3 planes de animaciones/blur del HUD (pedido explícito: nunca
+        # apagar animWheel, el menu de apps - baja el resto + el blur
+        # de Hyprland, ver applyPerfPreset en cyber-shell/config.ts).
+        "$mod SHIFT, F1, HUD: Plan de rendimiento FULL, exec, ags request -i cyberpunk 'perf full'"
+        "$mod SHIFT, F2, HUD: Plan de rendimiento BALANCED, exec, ags request -i cyberpunk 'perf balanced'"
+        "$mod SHIFT, F3, HUD: Plan de rendimiento PERFORMANCE, exec, ags request -i cyberpunk 'perf performance'"
+        # Panel con todos los binds de Hyprland (lee hyprctl binds -j en
+        # vivo, ver shortcuts.ts) - mientras se aprende Wayland. S (no K):
+        # K ya es "forzar cierre" en gestión de ventanas, más abajo.
+        "$mod SHIFT, S, HUD: Abrir/cerrar panel de shortcuts, exec, ags request -i cyberpunk shortcuts"
 
-          # El resto de los paneles/toggles del HUD (auditoría completa de
-          # userbinds.ts/THEME_ACTIONS - el diseño original de CyberArch-Shell,
-          # pensado para un sistema de config Lua que no usamos, ver
-          # DECISIONS.md). Se traduce acá 1 a 1 a bindd real. Quedan afuera
-          # a propósito: chequeo de updates de AUR/del tema (no aplica,
-          # desplegamos por Nix desde un commit fijo, no hay AUR) y el
-          # cheatsheet estático de keybinds del HUD (mostraría datos
-          # desactualizados/con entradas de AUR - nuestro panel de
-          # $mod SHIFT+S ya cubre eso mejor, lee hyprctl binds -j en vivo).
-          "$mod SHIFT, V, HUD: Volumen, exec, ags request -i cyberpunk 'modal vol'"
-          "$mod SHIFT, I, HUD: Brillo, exec, ags request -i cyberpunk 'modal brt'"
-          "$mod SHIFT, M, HUD: Notificaciones (historial), exec, ags request -i cyberpunk notif-hud"
-          "$mod SHIFT, O, HUD: Reproductor de música, exec, ags request -i cyberpunk player"
-          "$mod SHIFT, N, HUD: Wifi, exec, ags request -i cyberpunk 'modal wifi'"
-          "$mod SHIFT, B, HUD: Bluetooth, exec, ags request -i cyberpunk 'modal bt'"
-          "$mod SHIFT, P, HUD: Energía, exec, ags request -i cyberpunk 'modal pwr'"
-          "$mod SHIFT, W, HUD: Pronóstico del clima, exec, ags request -i cyberpunk forecast"
-          "$mod SHIFT, minus, HUD: Reloj, exec, ags request -i cyberpunk clock"
-          "$mod SHIFT, Y, HUD: Batería, exec, ags request -i cyberpunk 'modal bat'"
-          "$mod SHIFT, C, HUD: Monitor CPU/RAM, exec, ags request -i cyberpunk 'modal sys'"
-          # % de sesión (5h)/semana de Claude Code, del mismo endpoint que usa
-          # `claude` para su propio status (ver aiusage.ts/scripts/ai-usage.py
-          # en cyber-shell) - reusa el token OAuth que Claude Code ya guarda,
-          # nunca pide credenciales nuevas.
-          "$mod SHIFT, U, HUD: Uso de Claude Code (sesion/semana), exec, ags request -i cyberpunk 'modal aiusage'"
-          "$mod SHIFT, BackSpace, HUD: Ajustes del tema (animaciones/blur), exec, ags request -i cyberpunk 'modal themesettings'"
-          # Mismo mensaje de socket que dispara el click en el ícono "R" del
-          # dock (confirmado contra scripts/screenrecord) - un solo bind,
-          # no dos formas distintas de hacer lo mismo.
-          "$mod SHIFT, R, HUD: Grabar pantalla (toggle), exec, ags request -i cyberpunk record-region"
-          "$mod SHIFT, Z, HUD: Mostrar/ocultar HUD completo, exec, ags request -i cyberpunk toggle-hud"
-          # Rueda de apps estilo Kiroshi (openAppsMenu). En el original es
-          # SUPER+TAB -> scripts/launcher, que manda "apps-menu" al socket;
-          # la auditoría de arriba no lo vio porque está en un CD.bind()
-          # suelto de keybinds.lua, no en THEME_ACTIONS. $mod+D sigue
-          # siendo wofi (el request "launcher" es eso mismo, no hace falta).
-          # SHIFT (no $mod solo) por la convención unificada de HUD de arriba.
-          "$mod SHIFT, Tab, HUD: Menú de aplicaciones (rueda), exec, ags request -i cyberpunk apps-menu"
+        # El resto de los paneles/toggles del HUD (auditoría completa de
+        # userbinds.ts/THEME_ACTIONS - el diseño original de CyberArch-Shell,
+        # pensado para un sistema de config Lua que no usamos, ver
+        # DECISIONS.md). Se traduce acá 1 a 1 a bindd real. Quedan afuera
+        # a propósito: chequeo de updates de AUR/del tema (no aplica,
+        # desplegamos por Nix desde un commit fijo, no hay AUR) y el
+        # cheatsheet estático de keybinds del HUD (mostraría datos
+        # desactualizados/con entradas de AUR - nuestro panel de
+        # $mod SHIFT+S ya cubre eso mejor, lee hyprctl binds -j en vivo).
+        "$mod SHIFT, V, HUD: Volumen, exec, ags request -i cyberpunk 'modal vol'"
+        "$mod SHIFT, I, HUD: Brillo, exec, ags request -i cyberpunk 'modal brt'"
+        "$mod SHIFT, M, HUD: Notificaciones (historial), exec, ags request -i cyberpunk notif-hud"
+        "$mod SHIFT, O, HUD: Reproductor de música, exec, ags request -i cyberpunk player"
+        "$mod SHIFT, N, HUD: Wifi, exec, ags request -i cyberpunk 'modal wifi'"
+        "$mod SHIFT, B, HUD: Bluetooth, exec, ags request -i cyberpunk 'modal bt'"
+        "$mod SHIFT, P, HUD: Energía, exec, ags request -i cyberpunk 'modal pwr'"
+        "$mod SHIFT, W, HUD: Pronóstico del clima, exec, ags request -i cyberpunk forecast"
+        "$mod SHIFT, minus, HUD: Reloj, exec, ags request -i cyberpunk clock"
+        "$mod SHIFT, Y, HUD: Batería, exec, ags request -i cyberpunk 'modal bat'"
+        "$mod SHIFT, C, HUD: Monitor CPU/RAM, exec, ags request -i cyberpunk 'modal sys'"
+        # % de sesión (5h)/semana de Claude Code, del mismo endpoint que usa
+        # `claude` para su propio status (ver aiusage.ts/scripts/ai-usage.py
+        # en cyber-shell) - reusa el token OAuth que Claude Code ya guarda,
+        # nunca pide credenciales nuevas.
+        "$mod SHIFT, U, HUD: Uso de Claude Code (sesion/semana), exec, ags request -i cyberpunk 'modal aiusage'"
+        "$mod SHIFT, BackSpace, HUD: Ajustes del tema (animaciones/blur), exec, ags request -i cyberpunk 'modal themesettings'"
+        # Mismo mensaje de socket que dispara el click en el ícono "R" del
+        # dock (confirmado contra scripts/screenrecord) - un solo bind,
+        # no dos formas distintas de hacer lo mismo.
+        "$mod SHIFT, R, HUD: Grabar pantalla (toggle), exec, ags request -i cyberpunk record-region"
+        "$mod SHIFT, Z, HUD: Mostrar/ocultar HUD completo, exec, ags request -i cyberpunk toggle-hud"
+        # Rueda de apps estilo Kiroshi (openAppsMenu). En el original es
+        # SUPER+TAB -> scripts/launcher, que manda "apps-menu" al socket;
+        # la auditoría de arriba no lo vio porque está en un CD.bind()
+        # suelto de keybinds.lua, no en THEME_ACTIONS. $mod+D sigue
+        # siendo wofi (el request "launcher" es eso mismo, no hace falta).
+        # SHIFT (no $mod solo) por la convención unificada de HUD de arriba.
+        "$mod SHIFT, Tab, HUD: Menú de aplicaciones (rueda), exec, ags request -i cyberpunk apps-menu"
 
-          # Gestión de ventanas del diseño original - estas son 100%
-          # Hyprland nativo, no pasan por el HUD (no tiene sentido pedirle
-          # a cyber-shell algo que el compositor ya resuelve solo).
-          "$mod, F, Ventanas: Alternar flotante, togglefloating"
-          "$mod SHIFT, F, Ventanas: Pantalla completa, fullscreen"
-          "$mod SHIFT, K, Ventanas: Forzar cierre (crosshair), exec, hyprctl kill"
-        ]
-        ++ (
-          builtins.concatLists (map (dir: [
-            "$mod, ${dir.key}, Ventanas: Foco ${dir.label}, movefocus, ${dir.dispatch}"
-            "$mod SHIFT, ${dir.key}, Ventanas: Mover ventana ${dir.label}, movewindow, ${dir.dispatch}"
-            "CTRL SHIFT, ${dir.key}, Ventanas: Redimensionar ${dir.label}, resizeactive, ${dir.resize}"
-          ]) [
-            { key = "left"; label = "a la izquierda"; dispatch = "l"; resize = "-20 0"; }
-            { key = "right"; label = "a la derecha"; dispatch = "r"; resize = "20 0"; }
-            { key = "up"; label = "hacia arriba"; dispatch = "u"; resize = "0 -20"; }
-            { key = "down"; label = "hacia abajo"; dispatch = "d"; resize = "0 20"; }
-          ])
-        )
-        ++ (
-          # $mod+1..5 va al workspace, $mod+shift+1..5 mueve la ventana activa
-          builtins.concatLists (map (i: [
-            "$mod, ${toString i}, Workspaces: Ir al workspace ${toString i}, workspace, ${toString i}"
-            "$mod SHIFT, ${toString i}, Workspaces: Mover ventana al workspace ${toString i}, movetoworkspace, ${toString i}"
-          ]) [ 1 2 3 4 5 ])
-        );
+        # Gestión de ventanas del diseño original - estas son 100%
+        # Hyprland nativo, no pasan por el HUD (no tiene sentido pedirle
+        # a cyber-shell algo que el compositor ya resuelve solo).
+        "$mod, F, Ventanas: Alternar flotante, togglefloating"
+        "$mod SHIFT, F, Ventanas: Pantalla completa, fullscreen"
+        "$mod SHIFT, K, Ventanas: Forzar cierre (crosshair), exec, hyprctl kill"
+      ] ++ (builtins.concatLists (map (dir: [
+        "$mod, ${dir.key}, Ventanas: Foco ${dir.label}, movefocus, ${dir.dispatch}"
+        "$mod SHIFT, ${dir.key}, Ventanas: Mover ventana ${dir.label}, movewindow, ${dir.dispatch}"
+        "CTRL SHIFT, ${dir.key}, Ventanas: Redimensionar ${dir.label}, resizeactive, ${dir.resize}"
+      ]) [
+        {
+          key = "left";
+          label = "a la izquierda";
+          dispatch = "l";
+          resize = "-20 0";
+        }
+        {
+          key = "right";
+          label = "a la derecha";
+          dispatch = "r";
+          resize = "20 0";
+        }
+        {
+          key = "up";
+          label = "hacia arriba";
+          dispatch = "u";
+          resize = "0 -20";
+        }
+        {
+          key = "down";
+          label = "hacia abajo";
+          dispatch = "d";
+          resize = "0 20";
+        }
+      ])) ++ (
+        # $mod+1..5 va al workspace, $mod+shift+1..5 mueve la ventana activa
+        builtins.concatLists (map (i: [
+          "$mod, ${toString i}, Workspaces: Ir al workspace ${
+            toString i
+          }, workspace, ${toString i}"
+          "$mod SHIFT, ${toString i}, Workspaces: Mover ventana al workspace ${
+            toString i
+          }, movetoworkspace, ${toString i}"
+        ]) [ 1 2 3 4 5 ]));
 
       bindmd = [
         "$mod, mouse:272, Ventanas (mouse): Mover ventana, movewindow"
@@ -413,10 +432,17 @@ in
         before_sleep_cmd = "loginctl lock-session";
       };
       listener = [
-        { timeout = osConfig.workos.security.lockTimeout; on-timeout = "loginctl lock-session"; }
+        {
+          timeout = osConfig.workos.security.lockTimeout;
+          on-timeout = "loginctl lock-session";
+        }
         # Apaga la pantalla junto con el bloqueo, sin suspender: suspendida no
         # responde por SSH, y la máquina se usa remota desde otro PC.
-        { timeout = osConfig.workos.security.lockTimeout; on-timeout = "hyprctl dispatch dpms off"; on-resume = "hyprctl dispatch dpms on"; }
+        {
+          timeout = osConfig.workos.security.lockTimeout;
+          on-timeout = "hyprctl dispatch dpms off";
+          on-resume = "hyprctl dispatch dpms on";
+        }
       ];
     };
   };

@@ -5,13 +5,21 @@
 let
   cfg = config.workos;
   inherit (lib) mkOption types;
-in
-{
+in {
   options.workos = {
     user = {
-      name = mkOption { type = types.str; description = "Usuario de login."; };
-      fullName = mkOption { type = types.str; description = "Nombre para los commits de git."; };
-      email = mkOption { type = types.str; description = "Email para los commits de git."; };
+      name = mkOption {
+        type = types.str;
+        description = "Usuario de login.";
+      };
+      fullName = mkOption {
+        type = types.str;
+        description = "Nombre para los commits de git.";
+      };
+      email = mkOption {
+        type = types.str;
+        description = "Email para los commits de git.";
+      };
       sshKeys = mkOption {
         type = types.listOf types.str;
         default = [ ];
@@ -24,7 +32,8 @@ in
     secretsPolicy = mkOption {
       type = types.path;
       default = ../work-os/cli/secrets-policy.yaml;
-      description = "Allowlist de secretos por skill (default-deny, DECISIONS.md #2).";
+      description =
+        "Allowlist de secretos por skill (default-deny, DECISIONS.md #2).";
     };
 
     cloudOps.environments = mkOption {
@@ -34,37 +43,117 @@ in
       # con datos reales); este módulo no conoce ninguno.
       type = types.listOf (types.submodule {
         options = {
-          name = mkOption { type = types.str; description = "Nombre del binario generado (ej. \"acme-dev\")."; };
-          envLabel = mkOption { type = types.str; description = "Palabra a tipear para confirmar una acción real (ej. \"dev\", \"prod\")."; };
-          awsProfile = mkOption { type = types.str; description = "Profile de AWS CLI (\"aws login --profile <esto>\")."; };
-          awsAccountId = mkOption { type = types.str; description = "Cuenta AWS - solo se muestra antes de ejecutar algo, no autentica nada."; };
-          region = mkOption { type = types.str; default = "us-east-1"; description = "Región AWS."; };
-          k3sNodeTag = mkOption { type = types.nullOr types.str; default = null; description = "Tag Name de la EC2 con el nodo k3s. null = sin kubectl/exec/migrate en este entorno."; };
-          bastionTag = mkOption { type = types.nullOr types.str; default = null; description = "Tag Name del bastion SSM hacia RDS. null = sin dump en este entorno."; };
-          k8sApiLoadBalancer = mkOption { type = types.nullOr types.str; default = null; description = "Nombre del load balancer interno de la API de k3s (cluster de varios nodos). Si se define, kubectl va por el bastion a ese LB en vez de directo al nodo; requiere bastionTag."; };
-          k8sLocalPort = mkOption { type = types.port; default = 6443; description = "Puerto local del túnel a la API de k3s. Distinto por entorno para que dos entornos no compartan un túnel abierto."; };
-          k8sApiTunnelDocument = mkOption { type = types.nullOr types.str; default = null; description = "Documento SSM para el túnel a k8sApiLoadBalancer (null = AWS-StartPortForwardingSessionToRemoteHost)."; };
-          rdsIdentifier = mkOption { type = types.nullOr types.str; default = null; description = "DBInstanceIdentifier de RDS."; };
-          dbSecretPrefix = mkOption { type = types.nullOr types.str; default = null; description = "Prefijo de Secrets Manager: \"<prefijo>/db/<nombre>\"."; };
-          terraformRepo = mkOption { type = types.nullOr types.str; default = null; description = "\"owner/repo\" de Terraform. null = sin tf-graph."; };
-          terraformDir = mkOption { type = types.nullOr types.str; default = null; description = "Root de Terraform dentro del repo (ej. \"envs/dev\")."; };
-          requireConfirmation = mkOption { type = types.bool; default = false; description = "Pedir confirmación tipeada antes de dump/migrate/exec reales."; };
-          migrateConfig = mkOption { type = types.nullOr types.path; default = null; description = "tsv: deployment<TAB>db_name<TAB>check_cmd<TAB>apply_cmd."; };
-          seedConfig = mkOption { type = types.nullOr types.path; default = null; description = "tsv: role<TAB>deployment<TAB>clean_cmd<TAB>load_cmd<TAB>export_cmd (role = primary|secondary, ver action_seed_run en cloud-ops.sh)."; };
+          name = mkOption {
+            type = types.str;
+            description = ''Nombre del binario generado (ej. "acme-dev").'';
+          };
+          envLabel = mkOption {
+            type = types.str;
+            description = ''
+              Palabra a tipear para confirmar una acción real (ej. "dev", "prod").'';
+          };
+          awsProfile = mkOption {
+            type = types.str;
+            description =
+              ''Profile de AWS CLI ("aws login --profile <esto>").'';
+          };
+          awsAccountId = mkOption {
+            type = types.str;
+            description =
+              "Cuenta AWS - solo se muestra antes de ejecutar algo, no autentica nada.";
+          };
+          region = mkOption {
+            type = types.str;
+            default = "us-east-1";
+            description = "Región AWS.";
+          };
+          k3sNodeTag = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description =
+              "Tag Name de la EC2 con el nodo k3s. null = sin kubectl/exec/migrate en este entorno.";
+          };
+          bastionTag = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description =
+              "Tag Name del bastion SSM hacia RDS. null = sin dump en este entorno.";
+          };
+          k8sApiLoadBalancer = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description =
+              "Nombre del load balancer interno de la API de k3s (cluster de varios nodos). Si se define, kubectl va por el bastion a ese LB en vez de directo al nodo; requiere bastionTag.";
+          };
+          k8sLocalPort = mkOption {
+            type = types.port;
+            default = 6443;
+            description =
+              "Puerto local del túnel a la API de k3s. Distinto por entorno para que dos entornos no compartan un túnel abierto.";
+          };
+          k8sApiTunnelDocument = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description =
+              "Documento SSM para el túnel a k8sApiLoadBalancer (null = AWS-StartPortForwardingSessionToRemoteHost).";
+          };
+          rdsIdentifier = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "DBInstanceIdentifier de RDS.";
+          };
+          dbSecretPrefix = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description =
+              ''Prefijo de Secrets Manager: "<prefijo>/db/<nombre>".'';
+          };
+          terraformRepo = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = ''"owner/repo" de Terraform. null = sin tf-graph.'';
+          };
+          terraformDir = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description =
+              ''Root de Terraform dentro del repo (ej. "envs/dev").'';
+          };
+          requireConfirmation = mkOption {
+            type = types.bool;
+            default = false;
+            description =
+              "Pedir confirmación tipeada antes de dump/migrate/exec reales.";
+          };
+          migrateConfig = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description =
+              "tsv: deployment<TAB>db_name<TAB>check_cmd<TAB>apply_cmd.";
+          };
+          seedConfig = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description =
+              "tsv: role<TAB>deployment<TAB>clean_cmd<TAB>load_cmd<TAB>export_cmd (role = primary|secondary, ver action_seed_run en cloud-ops.sh).";
+          };
         };
       });
       default = [ ];
       description = "Comandos por entorno para operar infra en AWS/k8s.";
     };
 
-    pc.enable = lib.mkEnableOption "comando `pc`: ver en pantalla completa otro PC que transmite con Sunshine (Moonlight)";
+    pc.enable = lib.mkEnableOption
+      "comando `pc`: ver en pantalla completa otro PC que transmite con Sunshine (Moonlight)";
     pc.resolution = mkOption {
       type = types.nullOr (types.strMatching "[0-9]+x[0-9]+");
       default = null;
       example = "1920x1200";
-      description = "Resolución que pide `pc` al PC remoto. null = la del monitor local (a su tamaño real; en paneles de alta densidad conviene una menor de la misma proporción).";
+      description =
+        "Resolución que pide `pc` al PC remoto. null = la del monitor local (a su tamaño real; en paneles de alta densidad conviene una menor de la misma proporción).";
     };
-    hermes.enable = lib.mkEnableOption "comando `hermes-bootstrap`: instala Hermes Agent sobre la suscripción de Claude (home-manager/hermes.nix)";
+    hermes.enable = lib.mkEnableOption
+      "comando `hermes-bootstrap`: instala Hermes Agent sobre la suscripción de Claude (home-manager/hermes.nix)";
   };
 
   config = {
@@ -80,11 +169,15 @@ in
     };
 
     home-manager.users.${cfg.user.name} = {
-      imports = [ ../home-manager/common.nix ] ++ lib.optional cfg.pc.enable ../home-manager/pc.nix
+      imports = [ ../home-manager/common.nix ]
+        ++ lib.optional cfg.pc.enable ../home-manager/pc.nix
         ++ lib.optional cfg.hermes.enable ../home-manager/hermes.nix;
       home.username = cfg.user.name;
       home.homeDirectory = "/home/${cfg.user.name}";
-      programs.git.settings.user = { inherit (cfg.user) email; name = cfg.user.fullName; };
+      programs.git.settings.user = {
+        inherit (cfg.user) email;
+        name = cfg.user.fullName;
+      };
       xdg.configFile."work-os/secrets-policy.yaml".source = cfg.secretsPolicy;
 
       # pg_dump/jq/flock: lo único que cloud-ops.sh necesita y common.nix no
@@ -92,31 +185,54 @@ in
       # PATH se hereda del shell que llama - mismo criterio que workos-vault,
       # que también declara util-linux a propósito aunque el sistema lo tenga
       # global).
-      home.packages = map
-        (e: pkgs.writeShellScriptBin e.name ''
+      home.packages = map (e:
+        pkgs.writeShellScriptBin e.name ''
           # pg_dump se niega a volcar un servidor de versión mayor que la suya
           # (y sí puede con uno menor): fijar la última mayor, no el default.
-          export PATH=${lib.makeBinPath [ pkgs.postgresql_18 pkgs.jq pkgs.util-linux ]}:$PATH
+          export PATH=${
+            lib.makeBinPath [ pkgs.postgresql_18 pkgs.jq pkgs.util-linux ]
+          }:$PATH
           export CLOUDOPS_NAME=${lib.escapeShellArg e.name}
           export CLOUDOPS_ENV_LABEL=${lib.escapeShellArg e.envLabel}
           export CLOUDOPS_AWS_PROFILE=${lib.escapeShellArg e.awsProfile}
           export CLOUDOPS_AWS_ACCOUNT_ID=${lib.escapeShellArg e.awsAccountId}
           export CLOUDOPS_REGION=${lib.escapeShellArg e.region}
-          ${lib.optionalString (e.k3sNodeTag != null) "export CLOUDOPS_K3S_TAG=${lib.escapeShellArg e.k3sNodeTag}"}
-          ${lib.optionalString (e.bastionTag != null) "export CLOUDOPS_BASTION_TAG=${lib.escapeShellArg e.bastionTag}"}
+          ${lib.optionalString (e.k3sNodeTag != null)
+          "export CLOUDOPS_K3S_TAG=${lib.escapeShellArg e.k3sNodeTag}"}
+          ${lib.optionalString (e.bastionTag != null)
+          "export CLOUDOPS_BASTION_TAG=${lib.escapeShellArg e.bastionTag}"}
           export CLOUDOPS_K8S_LOCAL_PORT=${toString e.k8sLocalPort}
-          ${lib.optionalString (e.k8sApiLoadBalancer != null) "export CLOUDOPS_K8S_API_LB=${lib.escapeShellArg e.k8sApiLoadBalancer}"}
-          ${lib.optionalString (e.k8sApiTunnelDocument != null) "export CLOUDOPS_K8S_API_DOCUMENT=${lib.escapeShellArg e.k8sApiTunnelDocument}"}
-          ${lib.optionalString (e.rdsIdentifier != null) "export CLOUDOPS_RDS_IDENTIFIER=${lib.escapeShellArg e.rdsIdentifier}"}
-          ${lib.optionalString (e.dbSecretPrefix != null) "export CLOUDOPS_DB_SECRET_PREFIX=${lib.escapeShellArg e.dbSecretPrefix}"}
-          ${lib.optionalString (e.terraformRepo != null) "export CLOUDOPS_TERRAFORM_REPO=${lib.escapeShellArg e.terraformRepo}"}
-          ${lib.optionalString (e.terraformDir != null) "export CLOUDOPS_TERRAFORM_DIR=${lib.escapeShellArg e.terraformDir}"}
-          export CLOUDOPS_REQUIRE_CONFIRM=${if e.requireConfirmation then "true" else "false"}
-          ${lib.optionalString (e.migrateConfig != null) "export CLOUDOPS_MIGRATE_CONFIG=${e.migrateConfig}"}
-          ${lib.optionalString (e.seedConfig != null) "export CLOUDOPS_SEED_CONFIG=${e.seedConfig}"}
+          ${lib.optionalString (e.k8sApiLoadBalancer != null)
+          "export CLOUDOPS_K8S_API_LB=${
+            lib.escapeShellArg e.k8sApiLoadBalancer
+          }"}
+          ${lib.optionalString (e.k8sApiTunnelDocument != null)
+          "export CLOUDOPS_K8S_API_DOCUMENT=${
+            lib.escapeShellArg e.k8sApiTunnelDocument
+          }"}
+          ${lib.optionalString (e.rdsIdentifier != null)
+          "export CLOUDOPS_RDS_IDENTIFIER=${
+            lib.escapeShellArg e.rdsIdentifier
+          }"}
+          ${lib.optionalString (e.dbSecretPrefix != null)
+          "export CLOUDOPS_DB_SECRET_PREFIX=${
+            lib.escapeShellArg e.dbSecretPrefix
+          }"}
+          ${lib.optionalString (e.terraformRepo != null)
+          "export CLOUDOPS_TERRAFORM_REPO=${
+            lib.escapeShellArg e.terraformRepo
+          }"}
+          ${lib.optionalString (e.terraformDir != null)
+          "export CLOUDOPS_TERRAFORM_DIR=${lib.escapeShellArg e.terraformDir}"}
+          export CLOUDOPS_REQUIRE_CONFIRM=${
+            if e.requireConfirmation then "true" else "false"
+          }
+          ${lib.optionalString (e.migrateConfig != null)
+          "export CLOUDOPS_MIGRATE_CONFIG=${e.migrateConfig}"}
+          ${lib.optionalString (e.seedConfig != null)
+          "export CLOUDOPS_SEED_CONFIG=${e.seedConfig}"}
           exec ${pkgs.bash}/bin/bash ${../work-os/scripts}/cloud-ops.sh "$@"
-        '')
-        cfg.cloudOps.environments;
+        '') cfg.cloudOps.environments;
     };
   };
 }

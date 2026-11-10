@@ -3,8 +3,7 @@
 # sonando acá (antes --audio-on-host lo dejaba en el PC remoto). Se activa con
 # workos.pc.enable (modules/workos.nix); las reglas de ventana de
 # Moonlight están en hyprland.nix.
-{ pkgs, osConfig, ... }:
-{
+{ pkgs, osConfig, ... }: {
   home.packages = [
     pkgs.moonlight-qt
     (pkgs.writeShellScriptBin "pc" ''
@@ -40,7 +39,12 @@
       # remoto tiene que ofrecer ese modo (en Windows: lista de
       # resoluciones del Virtual Display Driver).
       mon=$(hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r 'map(select(.focused))[0] // .[0] | "\(.width)x\(.height) \(.refreshRate | round)"')
-      res=''${PC_RES:-${if osConfig.workos.pc.resolution != null then osConfig.workos.pc.resolution else "\${mon% *}"}}; fps=''${PC_FPS:-''${mon#* }}
+      res=''${PC_RES:-${
+        if osConfig.workos.pc.resolution != null then
+          osConfig.workos.pc.resolution
+        else
+          "\${mon% *}"
+      }}; fps=''${PC_FPS:-''${mon#* }}
       [[ $res =~ ^[0-9]+x[0-9]+$ ]] || res=1920x1080
       [[ $fps =~ ^[0-9]+$ ]] || fps=60
       setsid -f $ml stream "$host" Desktop --resolution "$res" --fps "$fps" --display-mode fullscreen >/dev/null 2>&1

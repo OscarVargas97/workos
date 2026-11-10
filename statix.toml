@@ -1,0 +1,2 @@
+# Repeated keys (W20) es de estilo: agrupar atributos en módulos NixOS grandes no aporta y no se puede evaluar aquí.
+disabled = [ "repeated_keys" ]

@@ -68,13 +68,13 @@ let
     # sin medidas reales). Ctrl+\ despega sin cerrar la sesión.
     exec ${pkgs.dtach}/bin/dtach -a "$SOCKET" -r winch
   '';
-in
-{
+in {
   home.packages = [ slkAttach ];
 
   systemd.user.services.slk = {
     Unit = {
-      Description = "slk - Slack en segundo plano (notificaciones con la ventana cerrada)";
+      Description =
+        "slk - Slack en segundo plano (notificaciones con la ventana cerrada)";
       # Las notificaciones van por D-Bus al daemon del HUD, que vive en la
       # sesión gráfica: fuera de ella el servicio no tendría a quién
       # avisarle.

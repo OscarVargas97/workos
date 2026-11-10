@@ -12,6 +12,7 @@ skill para saltarse la allowlist de secrets-policy.yaml. Este server no
 desbloquea Bitwarden solo: asume que una persona ya corrió `rbw unlock` -
 si no, `rbw get` falla y ese error se devuelve tal cual.
 """
+
 import os
 import subprocess
 

@@ -10,7 +10,8 @@
 
   disko.devices = {
     disk.main = {
-      device = "/dev/vda"; # VM de QEMU/Boxes; en la laptop real sería /dev/nvme0n1
+      device =
+        "/dev/vda"; # VM de QEMU/Boxes; en la laptop real sería /dev/nvme0n1
       type = "disk";
       content = {
         type = "gpt";

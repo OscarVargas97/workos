@@ -10,8 +10,7 @@
 # (--no-filesystems porque disko-config.nix ya define los filesystems; no
 # duplicar). Reemplazar este archivo con ese resultado antes de instalar en
 # hardware real.
-{ modulesPath, ... }:
-{
+{ modulesPath, ... }: {
   # El perfil oficial de nixpkgs para VMs QEMU ya trae los módulos virtio
   # correctos en el initrd — no hace falta re-listarlos a mano.
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];

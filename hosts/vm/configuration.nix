@@ -1,6 +1,5 @@
 # Genérico: el hardware y el disco de cada máquina se agregan en flake.nix.
-{ config, pkgs, ... }:
-{
+{ config, pkgs, ... }: {
   boot.loader.systemd-boot.enable = true;
   # Sin editar la línea del kernel desde el menú de arranque: con acceso
   # físico permitía agregar init=/bin/sh o similares. Las generaciones
@@ -120,7 +119,10 @@
   programs.dconf.enable = true;
   # LocalSend: pasar archivos entre equipos de la red (work vault env send).
   # Abre el 53317 (TCP/UDP) para descubrir equipos y recibir.
-  programs.localsend = { enable = true; openFirewall = true; };
+  programs.localsend = {
+    enable = true;
+    openFirewall = true;
+  };
 
   # hyprpolkitagent (home-manager, hyprland.nix) necesita el servicio de
   # polkit corriendo — explícito para no depender de que algo más lo
@@ -141,7 +143,10 @@
       # de sesion correcto (dbus/systemd) - sin esto tira el warning de
       # "started without start-hyprland" y servicios como hyprpaper
       # pueden no levantar bien.
-      command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd start-hyprland --background matrix --matrix-colors '#00FF41,#008F11,#003B00' --custom-title 'nixos-unstab // acceso' --greeting '  (=^.^=)\n (\")_(\")\nautenticacion requerida' --asterisks --container-padding 2 --window-padding 2";
+      command = ''
+        ${pkgs.tuigreet}/bin/tuigreet --time --cmd start-hyprland --background matrix --matrix-colors '#00FF41,#008F11,#003B00' --custom-title 'nixos-unstab // acceso' --greeting '  (=^.^=)
+         (")_(")
+        autenticacion requerida' --asterisks --container-padding 2 --window-padding 2'';
       user = "greeter";
     };
   };

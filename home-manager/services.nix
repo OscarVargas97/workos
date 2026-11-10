@@ -157,8 +157,7 @@ let
         exit 1 ;;
     esac
   '';
-in
-{
+in {
   # Se expone al resto de los módulos de Home Manager: poner esto en
   # `Service.ExecCondition` es lo único que hace falta para que un
   # servicio se pueda dar de baja y aparezca en el panel del HUD. %N es el

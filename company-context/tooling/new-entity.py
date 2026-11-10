@@ -14,6 +14,7 @@ corrido después de revisarla).
 Uso:
   uv run tooling/new-entity.py --type project --concept-id project-x --name "Proyecto X"
 """
+
 import argparse
 import datetime
 import os
@@ -63,7 +64,7 @@ def main() -> int:
         "confidence": "unverified",
         "updated": datetime.date.today().isoformat(),
     }
-    body = f"---\n{yaml.safe_dump(frontmatter, sort_keys=False, allow_unicode=True)}---\n\n# {args.name}\n\n(completar)\n"
+    body = f"---\n{yaml.safe_dump(frontmatter, sort_keys=False, allow_unicode=True)}---\n\n# {args.name}\n\n(completar)\n"  # noqa: E501
     target.write_text(body, encoding="utf-8")
     print(f"Creado: {target.relative_to(ROOT)}")
     return 0

@@ -19,6 +19,7 @@ Comprueba, por cada archivo .md (menos README.md):
      supersedes) apunta a un concept_id que existe de verdad - no un
      link roto.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -87,18 +88,22 @@ def main() -> int:
 
         concept_id = fm.get("concept_id")
         if concept_id and concept_id != path.stem:
-            errors.append(f"{rel}: concept_id '{concept_id}' no coincide con el nombre de archivo '{path.stem}.md'")
+            errors.append(
+                f"{rel}: concept_id '{concept_id}' no coincide con el nombre de archivo '{path.stem}.md'"
+            )
 
         fm_type = fm.get("type")
         if fm_type and fm_type not in FOLDER_TYPES[folder]:
-            errors.append(f"{rel}: type '{fm_type}' no corresponde a la carpeta '{folder}/' (esperado: {sorted(FOLDER_TYPES[folder])})")
+            errors.append(
+                f"{rel}: type '{fm_type}' no corresponde a la carpeta '{folder}/' (esperado: {sorted(FOLDER_TYPES[folder])})"  # noqa: E501
+            )
 
         if concept_id:
             all_concept_ids.add(concept_id)
         entities.append((folder, path, fm))
 
     # Segunda pasada: relaciones tienen que apuntar a algo que existe.
-    for folder, path, fm in entities:
+    for _folder, path, fm in entities:
         rel = path.relative_to(ROOT)
         for field in RELATION_FIELDS:
             for target in fm.get(field, []) or []:

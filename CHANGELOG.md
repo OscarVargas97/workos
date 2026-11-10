@@ -2,6 +2,17 @@
 
 Lo que trae cada cambio de Work OS, lo más nuevo arriba.
 
+## Calidad de ia-qa · en revisión
+
+`ci/14-calidad` · #14 (solicitud ia-qa#27)
+
+### Nuevo
+- Calidad de ia-qa (catálogo 0.2.0, perfiles `python` y `nix`): hooks de git (`commit-msg`, `pre-push`), hook Stop de Claude, workflows `calidad`, `vigilancia-main` y `sonarcloud`, `.calidad/checks.sh` y `.calidad.yml`.
+- Activar en el clon: `git config core.hooksPath .githooks`.
+
+### Cambios
+- Código Python formateado y corregido para ruff (`ruff.toml`); sin cambios de comportamiento.
+
 ## Espacio workos con su Project · en revisión
 
 `docs/13-agents-project` · #13

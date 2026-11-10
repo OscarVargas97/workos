@@ -40,6 +40,7 @@ Uso:
   uv run tooling/semantic_search.py "cómo se comunican el backend y el worker"
   uv run tooling/semantic_search.py --top 5 "algo"
 """
+
 import argparse
 import os
 import sys
@@ -70,7 +71,7 @@ def load_entities() -> list[dict]:
             if end == -1:
                 continue
             frontmatter = yaml.safe_load(text[4:end]) or {}
-            body = text[end + 4:].strip()
+            body = text[end + 4 :].strip()
             entities.append(
                 {
                     "concept_id": frontmatter.get("concept_id", path.stem),
@@ -100,7 +101,7 @@ def main() -> int:
     query_embedding = model.encode(args.query, convert_to_tensor=True)
 
     scores = util.cos_sim(query_embedding, corpus_embeddings)[0]
-    ranked = sorted(zip(entities, scores.tolist()), key=lambda x: x[1], reverse=True)
+    ranked = sorted(zip(entities, scores.tolist(), strict=True), key=lambda x: x[1], reverse=True)
 
     for entity, score in ranked[: args.top]:
         print(f"{score:.3f}  {entity['concept_id']:20s} {entity['name']}  ({entity['path']})")
